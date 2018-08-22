@@ -1,0 +1,20 @@
+set p_t_p create_agent \"Click\"
+set p_t_p.agents[0] domain_command 127
+set p_t_p.agents[0] hosting_port_command \"p_t_p.ports[0]\"
+
+set p_t_p_clock input_command \"p_t_p.agents[0].output\"
+set system_clock input \"p_t_p.agents[0].output\"
+
+set video_signal_generator standard_command \"HD1080p50\"
+set video_signal_generator pattern \"Colorbars100\"
+
+set i_o_module.output[0].sdi standard_command \"HD1080p50\"
+set i_o_module.output[1].sdi standard_command \"HD1080p50\"
+set i_o_module.output[2].sdi standard_command \"HD1080p50\"
+set i_o_module.output[3].sdi standard_command \"HD1080p50\"
+set i_o_module.output[4].sdi standard_command \"HD1080p50\"
+set i_o_module.output[5].sdi standard_command \"HD1080p50\"
+set i_o_module.output[6].sdi standard_command \"HD1080p50\"
+set i_o_module.output[7].sdi standard_command \"HD1080p50\"
+set i_o_module.output[8].sdi standard_command \"HD1080p50\"
+set i_o_module.output[9].sdi standard_command \"HD1080p50\"

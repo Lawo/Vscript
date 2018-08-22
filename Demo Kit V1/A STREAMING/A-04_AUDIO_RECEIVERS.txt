@@ -1,0 +1,72 @@
+set r_t_p_receiver.sessions[12] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[12] primary_interface_command \"network_interfaces.ports[0].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[12] secondary_interface_command \"network_interfaces.ports[4].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[12] active_command true
+
+set r_t_p_receiver.sessions[13] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[13] primary_interface_command \"network_interfaces.ports[1].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[13] secondary_interface_command \"network_interfaces.ports[5].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[13] active_command true
+
+set r_t_p_receiver.sessions[14] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[14] primary_interface_command \"network_interfaces.ports[2].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[14] secondary_interface_command \"network_interfaces.ports[6].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[14] active_command true
+
+set r_t_p_receiver.sessions[15] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[15] primary_interface_command \"network_interfaces.ports[3].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[15] secondary_interface_command \"network_interfaces.ports[7].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[15] active_command true
+
+set r_t_p_receiver.sessions[16] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[16] primary_interface_command \"network_interfaces.ports[0].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[16] secondary_interface_command \"network_interfaces.ports[4].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[16] active_command true
+
+set r_t_p_receiver.sessions[17] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[17] primary_interface_command \"network_interfaces.ports[1].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[17] secondary_interface_command \"network_interfaces.ports[5].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[17] active_command true
+
+set r_t_p_receiver.sessions[18] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[18] primary_interface_command \"network_interfaces.ports[2].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[18] secondary_interface_command \"network_interfaces.ports[6].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[18] active_command true
+
+set r_t_p_receiver.sessions[19] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[19] primary_interface_command \"network_interfaces.ports[3].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[19] secondary_interface_command \"network_interfaces.ports[7].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[19] active_command true
+
+set r_t_p_receiver.sessions[20] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[20] primary_interface_command \"network_interfaces.ports[0].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[20] secondary_interface_command \"network_interfaces.ports[4].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[20] active_command true
+
+set r_t_p_receiver.sessions[21] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[21] primary_interface_command \"network_interfaces.ports[1].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[21] secondary_interface_command \"network_interfaces.ports[5].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[21] active_command true
+
+set r_t_p_receiver.sessions[22] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[22] primary_interface_command \"network_interfaces.ports[2].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[22] secondary_interface_command \"network_interfaces.ports[6].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[22] active_command true
+
+set r_t_p_receiver.sessions[23] num_audio_receivers_command 1
+set r_t_p_receiver.sessions[23] primary_interface_command \"network_interfaces.ports[3].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[23] secondary_interface_command \"network_interfaces.ports[7].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[23] active_command true
+
+set r_t_p_receiver.audio_receiver_pool[0].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[1].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[2].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[3].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[4].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[5].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[6].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[7].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[8].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[9].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[10].audio_specific channel_capacity_command 8
+set r_t_p_receiver.audio_receiver_pool[11].audio_specific channel_capacity_command 8

@@ -1,0 +1,120 @@
+set audio_crossbar.pool[0].outputs[0] num_channels 8
+set audio_crossbar.pool[0].outputs[1] num_channels 8
+set audio_crossbar.pool[0].outputs[2] num_channels 8
+set audio_crossbar.pool[0].outputs[3] num_channels 8
+set audio_crossbar.pool[0].outputs[4] num_channels 8
+set audio_crossbar.pool[0].outputs[5] num_channels 8
+set audio_crossbar.pool[0].outputs[6] num_channels 8
+set audio_crossbar.pool[0].outputs[7] num_channels 8
+set audio_crossbar.pool[0].outputs[8] num_channels 8
+set audio_crossbar.pool[0].outputs[9] num_channels 8
+set audio_crossbar.pool[0].outputs[10] num_channels 8
+set audio_crossbar.pool[0].outputs[11] num_channels 8
+set audio_crossbar.pool[0].outputs[12] num_channels 8
+set audio_crossbar.pool[0].outputs[13] num_channels 8
+set audio_crossbar.pool[0].outputs[14] num_channels 8
+set audio_crossbar.pool[0].outputs[15] num_channels 8
+set audio_crossbar.pool[0].outputs[16] num_channels 8
+set audio_crossbar.pool[0].outputs[17] num_channels 8
+set audio_crossbar.pool[0].outputs[18] num_channels 8
+set audio_crossbar.pool[0].outputs[19] num_channels 8
+set audio_crossbar.pool[0].outputs[20] num_channels 8
+set audio_crossbar.pool[0].outputs[21] num_channels 8
+set audio_crossbar.pool[0].outputs[22] num_channels 8
+set audio_crossbar.pool[0].outputs[23] num_channels 8
+
+set i_o_module.output[0].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[0].output\"
+set i_o_module.output[0].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[0].output\"
+set i_o_module.output[0].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[0].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[0].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[0].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set i_o_module.output[1].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[1].output\"
+set i_o_module.output[1].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[1].output\"
+set i_o_module.output[1].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[1].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[1].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[1].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set i_o_module.output[2].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[2].output\"
+set i_o_module.output[2].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[2].output\"
+set i_o_module.output[2].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[2].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[2].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[2].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set i_o_module.output[3].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[3].output\"
+set i_o_module.output[3].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[4].output\"
+set i_o_module.output[3].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[3].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[3].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[3].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set i_o_module.output[4].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[4].output\"
+set i_o_module.output[4].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[4].output\"
+set i_o_module.output[4].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[4].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[4].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[4].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set i_o_module.output[5].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[5].output\"
+set i_o_module.output[5].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[5].output\"
+set i_o_module.output[5].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[5].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[5].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[5].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set i_o_module.output[6].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[6].output\"
+set i_o_module.output[6].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[6].output\"
+set i_o_module.output[6].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[6].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[6].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[6].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set i_o_module.output[7].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[7].output\"
+set i_o_module.output[7].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[7].output\"
+set i_o_module.output[7].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[7].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[7].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[7].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set i_o_module.output[8].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[8].output\"
+set i_o_module.output[8].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[8].output\"
+set i_o_module.output[8].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[8].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[8].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[8].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set i_o_module.output[9].sdi.vid_src v_src_command \"video_crossbar.pool[0].outputs[9].output\"
+set i_o_module.output[9].sdi.audio_control source_command \"audio_crossbar.pool[0].outputs[9].output\"
+set i_o_module.output[9].sdi.audio_control.group_enable[0] group_command \"Embed\"
+set i_o_module.output[9].sdi.audio_control.group_enable[1] group_command \"Embed\"
+set i_o_module.output[9].sdi.audio_control.group_enable[2] group_command \"Embed\"
+set i_o_module.output[9].sdi.audio_control.group_enable[3] group_command \"Embed\"
+
+set video_transmitter.pool[0].vid_source v_src_command \"video_crossbar.pool[0].outputs[10].output\"
+set video_transmitter.pool[1].vid_source v_src_command \"video_crossbar.pool[0].outputs[11].output\"
+set video_transmitter.pool[2].vid_source v_src_command \"video_crossbar.pool[0].outputs[12].output\"
+set video_transmitter.pool[3].vid_source v_src_command \"video_crossbar.pool[0].outputs[13].output\"
+set video_transmitter.pool[4].vid_source v_src_command \"video_crossbar.pool[0].outputs[14].output\"
+set video_transmitter.pool[5].vid_source v_src_command \"video_crossbar.pool[0].outputs[15].output\"
+set video_transmitter.pool[6].vid_source v_src_command \"video_crossbar.pool[0].outputs[16].output\"
+set video_transmitter.pool[7].vid_source v_src_command \"video_crossbar.pool[0].outputs[17].output\"
+set video_transmitter.pool[8].vid_source v_src_command \"video_crossbar.pool[0].outputs[18].output\"
+set video_transmitter.pool[9].vid_source v_src_command \"video_crossbar.pool[0].outputs[19].output\"
+set video_transmitter.pool[10].vid_source v_src_command \"video_crossbar.pool[0].outputs[20].output\"
+set video_transmitter.pool[11].vid_source v_src_command \"video_crossbar.pool[0].outputs[21].output\"
+
+set audio_transmitter.pool[0] source_command \"audio_crossbar.pool[0].outputs[10].output\"
+set audio_transmitter.pool[1] source_command \"audio_crossbar.pool[0].outputs[11].output\"
+set audio_transmitter.pool[2] source_command \"audio_crossbar.pool[0].outputs[12].output\"
+set audio_transmitter.pool[3] source_command \"audio_crossbar.pool[0].outputs[13].output\"
+set audio_transmitter.pool[4] source_command \"audio_crossbar.pool[0].outputs[14].output\"
+set audio_transmitter.pool[5] source_command \"audio_crossbar.pool[0].outputs[15].output\"
+set audio_transmitter.pool[6] source_command \"audio_crossbar.pool[0].outputs[16].output\"
+set audio_transmitter.pool[7] source_command \"audio_crossbar.pool[0].outputs[17].output\"
+set audio_transmitter.pool[8] source_command \"audio_crossbar.pool[0].outputs[18].output\"
+set audio_transmitter.pool[9] source_command \"audio_crossbar.pool[0].outputs[19].output\"
+set audio_transmitter.pool[10] source_command \"audio_crossbar.pool[0].outputs[20].output\"
+set audio_transmitter.pool[11] source_command \"audio_crossbar.pool[0].outputs[21].output\"

@@ -1,0 +1,59 @@
+set r_t_p_receiver.sessions[0] num_video_receivers_command 1
+set r_t_p_receiver.sessions[0] primary_interface_command \"network_interfaces.ports[0].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[0] secondary_interface_command \"network_interfaces.ports[4].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[0] active_command true
+
+set r_t_p_receiver.sessions[1] num_video_receivers_command 1
+set r_t_p_receiver.sessions[1] primary_interface_command \"network_interfaces.ports[1].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[1] secondary_interface_command \"network_interfaces.ports[5].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[1] active_command true
+
+set r_t_p_receiver.sessions[2] num_video_receivers_command 1
+set r_t_p_receiver.sessions[2] primary_interface_command \"network_interfaces.ports[2].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[2] secondary_interface_command \"network_interfaces.ports[6].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[2] active_command true
+
+set r_t_p_receiver.sessions[3] num_video_receivers_command 1
+set r_t_p_receiver.sessions[3] primary_interface_command \"network_interfaces.ports[3].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[3] secondary_interface_command \"network_interfaces.ports[7].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[3] active_command true
+
+set r_t_p_receiver.sessions[4] num_video_receivers_command 1
+set r_t_p_receiver.sessions[4] primary_interface_command \"network_interfaces.ports[0].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[4] secondary_interface_command \"network_interfaces.ports[4].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[4] active_command true
+
+set r_t_p_receiver.sessions[5] num_video_receivers_command 1
+set r_t_p_receiver.sessions[5] primary_interface_command \"network_interfaces.ports[1].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[5] secondary_interface_command \"network_interfaces.ports[5].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[5] active_command true
+
+set r_t_p_receiver.sessions[6] num_video_receivers_command 1
+set r_t_p_receiver.sessions[6] primary_interface_command \"network_interfaces.ports[2].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[6] secondary_interface_command \"network_interfaces.ports[6].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[6] active_command true
+
+set r_t_p_receiver.sessions[7] num_video_receivers_command 1
+set r_t_p_receiver.sessions[7] primary_interface_command \"network_interfaces.ports[3].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[7] secondary_interface_command \"network_interfaces.ports[7].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[7] active_command true
+
+set r_t_p_receiver.sessions[8] num_video_receivers_command 1
+set r_t_p_receiver.sessions[8] primary_interface_command \"network_interfaces.ports[0].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[8] secondary_interface_command \"network_interfaces.ports[4].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[8] active_command true
+
+set r_t_p_receiver.sessions[9] num_video_receivers_command 1
+set r_t_p_receiver.sessions[9] primary_interface_command \"network_interfaces.ports[1].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[9] secondary_interface_command \"network_interfaces.ports[5].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[9] active_command true
+
+set r_t_p_receiver.sessions[10] num_video_receivers_command 1
+set r_t_p_receiver.sessions[10] primary_interface_command \"network_interfaces.ports[2].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[10] secondary_interface_command \"network_interfaces.ports[6].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[10] active_command true
+
+set r_t_p_receiver.sessions[11] num_video_receivers_command 1
+set r_t_p_receiver.sessions[11] primary_interface_command \"network_interfaces.ports[3].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[11] secondary_interface_command \"network_interfaces.ports[7].virtual_interfaces[0]\"
+set r_t_p_receiver.sessions[11] active_command true

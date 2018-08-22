@@ -1,0 +1,54 @@
+set video_transmitter.transmitter_assignment interface_command \"network_interfaces.ports[0].virtual_interfaces[0]\"
+
+set video_transmitter.transmitter_assignment create_transmitter \"Click\"
+set video_transmitter.transmitter_assignment create_transmitter \"Click\"
+set video_transmitter.transmitter_assignment create_transmitter \"Click\"
+set video_transmitter.transmitter_assignment create_transmitter \"Click\"
+
+set video_transmitter.pool[0] transport_format_command \"ST2110_BPM\"
+set video_transmitter.pool[0].constraints standard_command null
+set video_transmitter.pool[0].constraints max_bandwidth_command \"b3_0Gb\"
+set video_transmitter.pool[0] add_new_output \"Click\"
+set video_transmitter.pool[0].output_port[0] interface_command \"network_interfaces.ports[0].virtual_interfaces[0]\"
+set video_transmitter.pool[0].output_port[1] interface_command \"network_interfaces.ports[4].virtual_interfaces[0]\"
+set video_transmitter.pool[0].output_port[0] mc_address_command \"231.0.0.1:9000\"
+set video_transmitter.pool[0].output_port[1] mc_address_command \"232.0.0.1:9000\"
+set video_transmitter.pool[0].output_port[0] active_command true
+set video_transmitter.pool[0].output_port[1] active_command true
+set video_transmitter.pool[0] active_command true
+
+set video_transmitter.pool[1] transport_format_command \"ST2110_BPM\"
+set video_transmitter.pool[1].constraints standard_command null
+set video_transmitter.pool[1].constraints max_bandwidth_command \"b3_0Gb\"
+set video_transmitter.pool[1] add_new_output \"Click\"
+set video_transmitter.pool[1].output_port[0] interface_command \"network_interfaces.ports[1].virtual_interfaces[0]\"
+set video_transmitter.pool[1].output_port[1] interface_command \"network_interfaces.ports[5].virtual_interfaces[0]\"
+set video_transmitter.pool[1].output_port[0] mc_address_command \"231.0.0.2:9000\"
+set video_transmitter.pool[1].output_port[1] mc_address_command \"232.0.0.2:9000\"
+set video_transmitter.pool[1].output_port[0] active_command true
+set video_transmitter.pool[1].output_port[1] active_command true
+set video_transmitter.pool[1] active_command true
+
+set video_transmitter.pool[2] transport_format_command \"ST2110_BPM\"
+set video_transmitter.pool[2].constraints standard_command null
+set video_transmitter.pool[2].constraints max_bandwidth_command \"b3_0Gb\"
+set video_transmitter.pool[2] add_new_output \"Click\"
+set video_transmitter.pool[2].output_port[0] interface_command \"network_interfaces.ports[2].virtual_interfaces[0]\"
+set video_transmitter.pool[2].output_port[1] interface_command \"network_interfaces.ports[6].virtual_interfaces[0]\"
+set video_transmitter.pool[2].output_port[0] mc_address_command \"231.0.0.3:9000\"
+set video_transmitter.pool[2].output_port[1] mc_address_command \"232.0.0.3:9000\"
+set video_transmitter.pool[2].output_port[0] active_command true
+set video_transmitter.pool[2].output_port[1] active_command true
+set video_transmitter.pool[2] active_command true
+
+set video_transmitter.pool[3] transport_format_command \"ST2110_BPM\"
+set video_transmitter.pool[3].constraints standard_command null
+set video_transmitter.pool[3].constraints max_bandwidth_command \"b3_0Gb\"
+set video_transmitter.pool[3] add_new_output \"Click\"
+set video_transmitter.pool[3].output_port[0] interface_command \"network_interfaces.ports[3].virtual_interfaces[0]\"
+set video_transmitter.pool[3].output_port[1] interface_command \"network_interfaces.ports[7].virtual_interfaces[0]\"
+set video_transmitter.pool[3].output_port[0] mc_address_command \"231.0.0.4:9000\"
+set video_transmitter.pool[3].output_port[1] mc_address_command \"232.0.0.4:9000\"
+set video_transmitter.pool[3].output_port[0] active_command true
+set video_transmitter.pool[3].output_port[1] active_command true
+set video_transmitter.pool[3] active_command true
