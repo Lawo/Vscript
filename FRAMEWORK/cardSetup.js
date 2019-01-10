@@ -2,7 +2,7 @@
 /**
 * @fileOverview Functions for simplifying setup of a C100
 * @author <a href="mailto:henrik.halvorsen@lawo.com">Henrik Halvorsen</a>
-* @version 1.0
+* @version 1.1
 */
 
 /**
