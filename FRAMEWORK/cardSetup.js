@@ -7,7 +7,7 @@
 
 /**
 * @module cardSetup
-* @desc Module containing all functions ofr complete C100 setup
+* @desc Module containing all functions for complete C100 setup
 */
 
 module.exports = function () {
