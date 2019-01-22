@@ -63,38 +63,58 @@ const user_configuration = {
 			//"b3_0Gb",
 			//"b12_0Gb",
 		audio_transmitters: [
-			{number: 0, 	multicast: "236.0.0.1", 	port: "9000"},
-			{number: 1, 	multicast: "236.0.0.2", 	port: "9000"},
-			{number: 2, 	multicast: "236.0.0.3", 	port: "9000"},
-			{number: 3, 	multicast: "236.0.0.4", 	port: "9000"},
-			{number: 4, 	multicast: "236.0.0.5", 	port: "9000"},
-			{number: 5, 	multicast: "236.0.0.6", 	port: "9000"},
-			{number: 6, 	multicast: "236.0.0.7", 	port: "9000"},
-			{number: 7, 	multicast: "236.0.0.8", 	port: "9000"},
-			{number: 8, 	multicast: "236.0.0.9", 	port: "9000"},
-			{number: 9, 	multicast: "236.0.0.10", 	port: "9000"},
-			{number: 10, 	multicast: "236.0.0.11", 	port: "9000"},
-			{number: 11, 	multicast: "236.0.0.12", 	port: "9000"},
-			{number: 12, 	multicast: "236.0.0.13", 	port: "9000"},
-			{number: 13, 	multicast: "236.0.0.14", 	port: "9000"},
-			{number: 14, 	multicast: "236.0.0.15", 	port: "9000"},
-			{number: 15, 	multicast: "236.0.0.16", 	port: "9000"},
-			{number: 16, 	multicast: "236.0.0.17", 	port: "9000"},
-			{number: 17, 	multicast: "236.0.0.18", 	port: "9000"},
+			{number: 0, 	multicast_primary: "236.0.0.1", 	port_primary: "9000",	multicast_secondary: "236.0.1.1", 	port_secondary: "9000"},
+			{number: 1, 	multicast_primary: "236.0.0.2", 	port_primary: "9000",	multicast_secondary: "236.0.1.2", 	port_secondary: "9000"},
+			{number: 2, 	multicast_primary: "236.0.0.3", 	port_primary: "9000",	multicast_secondary: "236.0.1.3", 	port_secondary: "9000"},
+			{number: 3, 	multicast_primary: "236.0.0.4", 	port_primary: "9000",	multicast_secondary: "236.0.1.4", 	port_secondary: "9000"},
+			{number: 4, 	multicast_primary: "236.0.0.5", 	port_primary: "9000",	multicast_secondary: "236.0.1.5", 	port_secondary: "9000"},
+			{number: 5, 	multicast_primary: "236.0.0.6", 	port_primary: "9000",	multicast_secondary: "236.0.1.6", 	port_secondary: "9000"},
+			{number: 6, 	multicast_primary: "236.0.0.7", 	port_primary: "9000",	multicast_secondary: "236.0.1.7", 	port_secondary: "9000"},
+			{number: 7, 	multicast_primary: "236.0.0.8", 	port_primary: "9000",	multicast_secondary: "236.0.1.8", 	port_secondary: "9000"},
+			{number: 8, 	multicast_primary: "236.0.0.9", 	port_primary: "9000",	multicast_secondary: "236.0.1.9", 	port_secondary: "9000"},
+			{number: 9, 	multicast_primary: "236.0.0.10", 	port_primary: "9000",	multicast_secondary: "236.0.1.10", 	port_secondary: "9000"},
+			{number: 10, 	multicast_primary: "236.0.0.11", 	port_primary: "9000",	multicast_secondary: "236.0.1.11", 	port_secondary: "9000"},
+			{number: 11, 	multicast_primary: "236.0.0.12", 	port_primary: "9000",	multicast_secondary: "236.0.1.12", 	port_secondary: "9000"},
+			{number: 12, 	multicast_primary: "236.0.0.13", 	port_primary: "9000",	multicast_secondary: "236.0.1.13", 	port_secondary: "9000"},
+			{number: 13, 	multicast_primary: "236.0.0.14", 	port_primary: "9000",	multicast_secondary: "236.0.1.14", 	port_secondary: "9000"},
+			{number: 14, 	multicast_primary: "236.0.0.15", 	port_primary: "9000",	multicast_secondary: "236.0.1.15", 	port_secondary: "9000"},
+			{number: 15, 	multicast_primary: "236.0.0.16", 	port_primary: "9000",	multicast_secondary: "236.0.1.16", 	port_secondary: "9000"},
+			{number: 16, 	multicast_primary: "236.0.0.17", 	port_primary: "9000",	multicast_secondary: "236.0.1.17", 	port_secondary: "9000"},
+			{number: 17, 	multicast_primary: "236.0.0.18", 	port_primary: "9000",	multicast_secondary: "236.0.1.18", 	port_secondary: "9000"},
 		],
+		audio_transmitter_format:
+			"L24",
+			//"L16",
+			//"AM824",
+		audio_packet_time:
+			//"p1", 
+			//"p0_666", 
+			//"p0_500", 
+			//"p0_333", 
+			//"p0_250", 
+			"p0_125",
+		audio_streaming_channels: 16,
 		video_receivers: {
 			switch_mode:
 				"DTS_BBM", //Destination-Timed Switching - Break Before Make
 				//"DTS_MBB", //Destination-Timed Switching - Make Before Break
-		},
-		audio_receivers: {
-			number_of_channels: 16,
+			switch_time:
+				1, //Dirty switching
+				//2, //Clean switching, at next possible frame boundary
 		}
 	},
 	routing: {
 		mode:
 			//"AudioFollowsVideo",
 			"AudioIsSeparate",
+	},
+	system: {
+		signal_gen_format:
+			"HD1080i50",
+			//"HD1080p50",
+			//"HD1080p59_94",
+			//"HD2160p60",
+			// Etc. etc.
 	}
 };
 
@@ -114,6 +134,9 @@ async function main() {
 		inform("Selecting " + desired_fpga);
 		requires_reboot = true;
 	}
+
+	// Step 1.1: Set the Signal Generator format
+	await write("video_signal_generator", "standard_command", user_configuration.system.signal_gen_format);
 
 	// Step 2: Configure network settings. This requires a reboot, so if running the script from the web GUI it will have to be run again after the card comes back.
 	let ip_address_list = [];
@@ -202,6 +225,8 @@ async function main() {
 		await create_table_row("audio_crossbar.large", "Audio_Xbar");
 		await write("audio_crossbar.large[0]", "num_inputs", 107);
 		await write("audio_crossbar.large[0]", "num_outputs", 46);
+		for (let i = 0; i < 107; i++) { await write("audio_crossbar.large[0].inputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels); }
+		for (let i = 0; i < 46; i++) { await write("audio_crossbar.large[0].outputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels); }
 	}
 
 	// Step 7: Configure SDI outputs
@@ -225,14 +250,14 @@ async function main() {
 
 	for (let i = 0; i < sdi_inputs; i++) {		
 		for (let j = 0; j < 8; j++) {
-			await this.write("video_transmitter.pool[" + i + "].audio_control.group_enable[" + j + "]", "group_command", "Embed");
+			await write("video_transmitter.pool[" + i + "].audio_control.group_enable[" + j + "]", "group_command", "Embed");
 		}
 
-		await this.write("video_transmitter.pool[" + i + "]", "transport_format_command", "ST2110_GPM");
-		await this.write("video_transmitter.pool[" + i + "].constraints", "max_bandwidth_command", user_configuration.streaming.video_bandwidth_constraint);
+		await write("video_transmitter.pool[" + i + "]", "transport_format_command", "ST2110_GPM");
+		await write("video_transmitter.pool[" + i + "].constraints", "max_bandwidth_command", user_configuration.streaming.video_bandwidth_constraint);
 
 		let multicast_primary =  user_configuration.streaming.video_transmitters[i].multicast_primary + ":" + user_configuration.streaming.video_transmitters[i].port_primary;
-		await this.write("video_transmitter.pool[" + i + "].output_port[0]", "mc_address_command", multicast_primary);
+		await write("video_transmitter.pool[" + i + "].output_port[0]", "mc_address_command", multicast_primary);
 		if (user_configuration.network.use_2022_7) {
 			let multicast_secondary =  user_configuration.streaming.video_transmitters[i].multicast_secondary + ":" + user_configuration.streaming.video_transmitters[i].port_secondary;
 			await dispatch_change_request("video_transmitter.pool[" + i + "]", "add_new_output", "Click");
@@ -242,22 +267,164 @@ async function main() {
 			} else if (user_configuration.network.mode == "10GbE") {
 				await write("video_transmitter.pool[" + i + "].output_port[1]", "interface_command", "network_interfaces.ports[" + (Math.floor((i * 4) / sdi_inputs) + 4) + "].virtual_interfaces[0]");
 			} 
-			await this.write("video_transmitter.pool[" + i + "].output_port[1]", "mc_address_command", multicast_secondary);
+			await write("video_transmitter.pool[" + i + "].output_port[1]", "mc_address_command", multicast_secondary);
 		}
-		await this.write("video_transmitter.pool[" + i + "]", "active_command", true);
+		await write("video_transmitter.pool[" + i + "]", "active_command", true);
+	}
+
+	// Step 9: Configure audio transmitters
+	for (let i = 0; i < sdi_inputs; i++) {
+		for (let i = 0; i < sdi_inputs; i++) {
+			if (user_configuration.network.mode == "40GbE") {
+				await write("audio_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+			} else if (user_configuration.network.mode == "10GbE") {
+				await write("audio_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[" + Math.floor((i * 4) / sdi_inputs) + "].virtual_interfaces[0]");
+			} 
+			await dispatch_change_request("audio_transmitter.transmitter_assignment", "create_transmitter", "Click");
+		}
+
+		await write("audio_transmitter.pool[" + i + "]", "format_command", user_configuration.streaming.audio_transmitter_format);
+		await write("audio_transmitter.pool[" + i + "]", "packet_time_command", user_configuration.streaming.audio_packet_time);
+		await write("audio_transmitter.pool[" + i + "]", "num_channels_command", user_configuration.streaming.audio_streaming_channels);
+
+		let multicast_primary =  user_configuration.streaming.audio_transmitters[i].multicast_primary + ":" + user_configuration.streaming.audio_transmitters[i].port_primary;
+		await write("audio_transmitter.pool[" + i + "].output_port[0]", "mc_address_command", multicast_primary);
+		if (user_configuration.network.use_2022_7) {
+			let multicast_secondary =  user_configuration.streaming.audio_transmitters[i].multicast_secondary + ":" + user_configuration.streaming.audio_transmitters[i].port_secondary;
+			await dispatch_change_request("audio_transmitter.pool[" + i + "]", "add_new_output", "Click");
+			await pause_ms(250);
+			if (user_configuration.network.mode == "40GbE") {
+				await write("audio_transmitter.pool[" + i + "].output_port[1]", "interface_command", "network_interfaces.ports[1].virtual_interfaces[0]");
+			} else if (user_configuration.network.mode == "10GbE") {
+				await write("audio_transmitter.pool[" + i + "].output_port[1]", "interface_command", "network_interfaces.ports[" + (Math.floor((i * 4) / sdi_inputs) + 4) + "].virtual_interfaces[0]");
+			} 
+			await write("audio_transmitter.pool[" + i + "].output_port[1]", "mc_address_command", multicast_secondary);
+		}
+		await write("audio_transmitter.pool[" + i + "]", "active_command", true);
+	}
+
+	// Step 10: Set up RTP receivers
+	await write("r_t_p_receiver.error_handling", "on_redundant_sdp", "DiscardAggressively");
+
+	for (let i = 0; i < sdi_outputs; i++) {
+		let s = await create_table_row("r_t_p_receiver.sessions");
+		if (user_configuration.network.mode == "40GbE") {
+			await write("r_t_p_receiver.sessions[" + s + "].interfaces", "primary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+		} else if (user_configuration.network.mode == "10GbE") {
+			await write("r_t_p_receiver.sessions[" + s + "].interfaces", "primary_command", "network_interfaces.ports[" + Math.floor((i * 4) / sdi_inputs) + "].virtual_interfaces[0]");
+		} 
+
+		if (user_configuration.network.use_2022_7) {
+			if (user_configuration.network.mode == "40GbE") {
+				await write("r_t_p_receiver.sessions[" + s + "].interfaces", "secondary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+			} else if (user_configuration.network.mode == "10GbE") {
+				await write("r_t_p_receiver.sessions[" + s + "].interfaces", "secondary_command", "network_interfaces.ports[" + (Math.floor((i * 4) / sdi_inputs) + 4) + "].virtual_interfaces[0]");
+			} 		
+		}
+
+		await write("r_t_p_receiver.sessions[" + s + "]", "switch_time_command", user_configuration.streaming.video_receivers.switch_time);
+		await write("r_t_p_receiver.sessions[" + s + "]", "switch_type_command", user_configuration.streaming.video_receivers.switch_mode);
+
+		let v = await create_table_row("r_t_p_receiver.video_receivers");
+		await write("r_t_p_receiver.video_receivers[" + v + "].generic", "hosting_session_command", "r_t_p_receiver.sessions[" + s + "]");
+		await write("r_t_p_receiver.video_receivers[" + v + "].generic.timing", "read_delay_preference", "AsEarlyAsPossible");
+		await write("r_t_p_receiver.video_receivers[" + v + "].generic.timing", "phase_reference_command", "TimeSource");
+		await write("r_t_p_receiver.video_receivers[" + v + "].generic.timing", "time_source_command", "genlock.output");
+
+		await write("r_t_p_receiver.sessions[" + s + "]", "active_command", true);
+	}
+	for (let i = 0; i < sdi_outputs; i++) {
+		let s = await create_table_row("r_t_p_receiver.sessions");
+		if (user_configuration.network.mode == "40GbE") {
+			await write("r_t_p_receiver.sessions[" + s + "].interfaces", "primary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+		} else if (user_configuration.network.mode == "10GbE") {
+			await write("r_t_p_receiver.sessions[" + s + "].interfaces", "primary_command", "network_interfaces.ports[" + Math.floor((i * 4) / sdi_inputs) + "].virtual_interfaces[0]");
+		} 
+
+		if (user_configuration.network.use_2022_7) {
+			if (user_configuration.network.mode == "40GbE") {
+				await write("r_t_p_receiver.sessions[" + s + "].interfaces", "secondary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+			} else if (user_configuration.network.mode == "10GbE") {
+				await write("r_t_p_receiver.sessions[" + s + "].interfaces", "secondary_command", "network_interfaces.ports[" + (Math.floor((i * 4) / sdi_inputs) + 4) + "].virtual_interfaces[0]");
+			} 		
+		}
+
+		await write("r_t_p_receiver.sessions[" + s + "]", "switch_time_command", user_configuration.streaming.video_receivers.switch_time);
+		await write("r_t_p_receiver.sessions[" + s + "]", "switch_type_command", user_configuration.streaming.video_receivers.switch_mode);
+
+		let a = await create_table_row("r_t_p_receiver.audio_receivers");
+		await write("r_t_p_receiver.audio_receivers[" + a + "].generic", "hosting_session_command", "r_t_p_receiver.sessions[" + s + "]");
+		await write("r_t_p_receiver.audio_receivers[" + a + "].audio_specific", "channel_capacity_command", user_configuration.streaming.audio_streaming_channels);
+
+		await write("r_t_p_receiver.sessions[" + s + "]", "active_command", true);
 	}
 
 
+	// Step 11: Assign signals to inputs (crossbars, SDI outputs, transmitters)
+	if (user_configuration.routing.mode == "AudioFollowsVideo") {
+		// Step 11.1: Crossbar inputs
+		// Assign SDI inputs to 0-17
+		for (let i = 0, input = 0; i < sdi_inputs; i++, input++) {
+			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "video_command", "i_o_module.input[" + i + "].sdi.output.video");
+			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "audio_command", "i_o_module.input[" + i + "].sdi.output.audio"); 
+		}
+		// Assign RTP receivers to inputs 18-36
+		for (let i = 0, input = 18; i < sdi_inputs; i++, input++) {
+			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "video_command", "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
+			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "audio_command", "r_t_p_receiver.audio_receivers[" + i + "].audio_specific.output"); 
+		}
+		// Assign test signal to input 36
+		await write("a_v_crossbar.pool[0].inputs[36].source", "video_command", "video_signal_generator.output");
+		await write("a_v_crossbar.pool[0].inputs[36].source", "audio_command", "audio_signal_generator.signal_aggregate.output"); 
+		
+		// Step 11.2: SDI Outputs
+		for (let i = 0, output = 0; i < sdi_outputs; i++, output++) {
+			await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
+			await write("i_o_module.output[" + i + "].sdi.audio_control", "source_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.audio");
+		}
 
-	// Step X: Assign signals to inputs (crossbars, SDI outputs, transmitters)
-	for (let i = 0, input = 0; i < sdi_inputs; i++, input++) {
-		await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "video_command", "i_o_module.input[" + i + "].sdi.output.video");
-		await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "audio_command", "i_o_module.input[" + i + "].sdi.output.audio"); 
+		// Step 11.3: Transmitters
+		for (let i = 0, output = 18; i < sdi_outputs; i++, output++) {
+			await write("video_transmitter.pool[" + i + "]", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
+			await write("audio_transmitter.pool[" + i + "]", "source_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.audio");
+			
+		}
+	} 
+	else if (user_configuration.routing.mode == "AudioIsSeparate") {
+		// Step 11.1: Crossbar inputs
+		// Assign SDI inputs to 0-17
+		for (let i = 0, input = 0; i < sdi_inputs; i++, input++) {
+			await write("video_crossbar.pool[0].inputs[" + input + "].source", "video_command", "i_o_module.input[" + i + "].sdi.output.video");
+			await write("audio_crossbar.large[0].inputs[" + input + "].source", "audio_command", "i_o_module.input[" + i + "].sdi.output.audio"); 
+		}
+		// Assign RTP receivers to inputs 18-36
+		for (let i = 0, input = 18; i < sdi_inputs; i++, input++) {
+			await write("video_crossbar.pool[0].inputs[" + input + "].source", "video_command", "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
+			await write("audio_crossbar.large[0].inputs[" + input + "].source", "audio_command", "r_t_p_receiver.audio_receivers[" + i + "].audio_specific.output"); 
+		}
+		// Assign test signal to input 36
+		await write("video_crossbar.pool[0].inputs[36].source", "video_command", "video_signal_generator.output");
+		await write("audio_crossbar.large[0].inputs[36].source", "audio_command", "audio_signal_generator.signal_aggregate.output"); 
+
+		// Step 11.2: SDI Outputs
+		for (let i = 0, output = 0; i < sdi_outputs; i++, output++) {
+			await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "video_crossbar.pool[0].outputs[" + output + "].output");
+			await write("i_o_module.output[" + i + "].sdi.audio_control", "source_command", "audio_crossbar.large[0].outputs[" + output + "].output");
+		}
+
+		// Step 11.3: Transmitters
+		for (let i = 0, output = 18; i < sdi_outputs; i++, output++) {
+			await write("video_transmitter.pool[" + i + "]", "v_src_command", "video_crossbar.pool[0].outputs[" + output + "].output");
+			await write("audio_transmitter.pool[" + i + "]", "source_command", "audio_crossbar.large[0].outputs[" + output + "].output");
+			
+		}
 	}
-	for (let i = 0, input = sdi_inputs; i < sdi_inputs; i++, input++) {
-		await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "video_command", "i_o_module.input[" + i + "].sdi.output.video");
-		await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "audio_command", "i_o_module.input[" + i + "].sdi.output.audio"); 
-	}
+
+	// Step 99: Reboot to publish crossbars to Ember
+	inform("Rebooting to apply update Ember+ tree with crossbars");
+	await reboot({ timeout: 120 });
+	inform("Reboot finished (or timed out)");
+
 }
 
 
