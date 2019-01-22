@@ -9,6 +9,9 @@
 * @module cardSetup
 * @desc Module containing all functions for complete C100 setup
 */
+//TODO: add audio channel count to crossbar_setup
+//TODO: add function for other commands
+//TODO: function for setting static SDP
 
 module.exports = function () {
 	this.STATUS_FLAG = false;
@@ -593,7 +596,7 @@ module.exports = function () {
 	* @param {object[]} config.sdi - Array containing one or more SDI configuration objects
 	* @param {number} config.sdi[].index - The index of the output
 	* @param {string} config.sdi[].standard - The standard to accept; null for auto
-	* @param {string} config.sdi[].audio - The audio mode to set; "Ember", "Off", "Bypass"
+	* @param {string} config.sdi[].audio - The audio mode to set; "Embed", "Off", "Bypass"
 	*/
 	this.sdi_setup = async function (config) {
 		this.verbose("Running sdi_setup()...", 36);
