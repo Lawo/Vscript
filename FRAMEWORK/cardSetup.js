@@ -639,6 +639,7 @@ module.exports = function () {
 	* @param {string} config.transmitters[].audio - The audio mode to set; "Ember", "Off", "Bypass"
 	* @param {string} config.transmitters[].constr_format - The constraints format setting "HD1080i50" "HD1080p50" etc.
 	* @param {string} config.transmitters[].constr_bandwith - The constaints max bandwidth "b3_0Gb" "b1_5Gb" "b12_0Gb"
+	* @param {number} config.transmitters[].payload - The payload ID
 	*/
 	this.video_transmitter_setup = async function (config) {
 		this.verbose("Running video_transmitter_setup()...", 41);
@@ -679,10 +680,16 @@ module.exports = function () {
 			//
 
 			await this.write("video_transmitter.pool[" + p + "].output_port[0]", "mc_address_command", config.transmitters[i].pri_mc, { ip: this.ip });
+			if (config.transmitters[i].hasOwnProperty("payload")) {
+				await this.write("video_transmitter.pool[" + p + "].output_port[0]", "payload_type_command", config.transmitters[i].payload, { ip: this.ip });
+			}
 			if (!is_1_8) { await this.write("video_transmitter.pool[" + p + "].output_port[0]", "active_command", true, { ip: this.ip }); }
 			if (config.transmitters[i].hasOwnProperty("sec_port")) {
 				await this.write("video_transmitter.pool[" + p + "].output_port[1]", "interface_command", "network_interfaces.ports[" + config.transmitters[i].sec_port + "].virtual_interfaces[0]", { ip: this.ip });
 				await this.write("video_transmitter.pool[" + p + "].output_port[1]", "mc_address_command", config.transmitters[i].sec_mc, { ip: this.ip });
+				if (config.transmitters[i].hasOwnProperty("payload")) {
+					await this.write("video_transmitter.pool[" + p + "].output_port[1]", "payload_type_command", config.transmitters[i].payload, { ip: this.ip });
+				}
 				if(!is_1_8) { await this.write("video_transmitter.pool[" + p + "].output_port[1]", "active_command", true, { ip: this.ip }); }
 			}
 			await this.write("video_transmitter.pool[" + p + "]", "active_command", true, { ip: this.ip });
@@ -703,6 +710,7 @@ module.exports = function () {
 	* @param {string} config.transmitters[].format - The stream format; "L16", "L24", "AM824"
 	* @param {string} config.transmitters[].packet_time - The stream packet time; "p0_125" - "p1"
 	* @param {number} config.transmitters[].num_channels - The number of audio channels in the stream
+	* @param {number} config.transmitters[].payload - The payload ID
 	*/
 	this.audio_transmitter_setup = async function (config) {
 		this.verbose("Running audio_transmitter_setup()...", 51);
@@ -724,12 +732,17 @@ module.exports = function () {
 			await this.write("audio_transmitter.pool[" + p + "]", "format_command", config.transmitters[i].format, { ip: this.ip });
 			await this.write("audio_transmitter.pool[" + p + "]", "packet_time_command", config.transmitters[i].packet_time, { ip: this.ip });
 			await this.write("audio_transmitter.pool[" + p + "]", "num_channels_command", config.transmitters[i].num_channels, { ip: this.ip });
-
+			if (config.transmitters[i].hasOwnProperty("payload")) {
+				await this.write("audio_transmitter.pool[" + p + "].output_port[0]", "payload_type_command", config.transmitters[i].payload, { ip: this.ip });
+			}
 			await this.write("audio_transmitter.pool[" + p + "].output_port[0]", "mc_address_command", config.transmitters[i].pri_mc, { ip: this.ip });
 			if (!is_1_8) { await this.write("audio_transmitter.pool[" + p + "].output_port[0]", "active_command", true, { ip: this.ip }); }
 			if (config.transmitters[i].hasOwnProperty("sec_port")) {
 				await this.write("audio_transmitter.pool[" + p + "].output_port[1]", "interface_command", "network_interfaces.ports[" + config.transmitters[i].sec_port + "].virtual_interfaces[0]", { ip: this.ip });
 				await this.write("audio_transmitter.pool[" + p + "].output_port[1]", "mc_address_command", config.transmitters[i].sec_mc, { ip: this.ip });
+				if (config.transmitters[i].hasOwnProperty("payload")) {
+					await this.write("audio_transmitter.pool[" + p + "].output_port[1]", "payload_type_command", config.transmitters[i].payload, { ip: this.ip });
+				}
 				if (!is_1_8) { await this.write("audio_transmitter.pool[" + p + "].output_port[1]", "active_command", true, { ip: this.ip }); }
 			}
 
