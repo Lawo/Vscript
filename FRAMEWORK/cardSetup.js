@@ -259,12 +259,12 @@ module.exports = function () {
 	this.system_setup = async function (config) {
 		this.verbose("Running system_setup()...", 1);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("system_config")) { config = config.system_config; }
-
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for system_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("system_config")) { config = config.system_config; }
+
 		if (config.reset) {
 			this.verbose("Resetting card, waiting...", 5);
 			await reset({ ip: this.ip });
@@ -277,7 +277,7 @@ module.exports = function () {
 			await dispatch_change_request("system", "select_fpga_command", config.fpga.toUpperCase().replace("GBE", "GbE"), this.ip);
 			await pause_ms(250);
 			this.verbose("Selecting " + config.fpga.toUpperCase().replace("GBE", "GbE") + " and rebooting...");
-			this.verbose("Current config is " + (await read("system", "selected_fpga", this.ip)));
+			//this.verbose("Current config is " + (await read("system", "selected_fpga", this.ip)));
 			await reboot({ timeout: 120, ip: this.ip });
 			this.verbose("Reboot finished (or timed out)");
 		}
@@ -298,12 +298,12 @@ module.exports = function () {
 	this.network_setup = async function (config) {
 		this.verbose("Running network_setup()...", 11);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("network_config")) { config = config.network_config; }
-
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for network_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("network_config")) { config = config.network_config; }
+
 		let numInterfaces;
 		// Set the number of interfaces to configure based on 40GbE/10GbE
 		if (!(config.hasOwnProperty("mode") && config.hasOwnProperty("addresses") && config.hasOwnProperty("prefixes"))) { return -1; }
@@ -449,12 +449,12 @@ module.exports = function () {
 	this.ptp_setup = async function (config) {
 		this.verbose("Running ptp_setup()...", 16);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("ptp_config")) { config = config.ptp_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for ptp_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("ptp_config")) { config = config.ptp_config; }
+		
 		let a = 0;
 
 		let alloc = await allocated_indices("p_t_p.agents", this.ip);
@@ -506,13 +506,13 @@ module.exports = function () {
 	*/
 	this.syslog_setup = async function (config) {
 		this.verbose("Running syslog_setup()...", 21);
-		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("syslog_config")) { config = config.syslog_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for syslog_setup");
 			return -1;
 		}
+		if(!this.READY) { await this.basics(config);	}
+		if (config.hasOwnProperty("syslog_config")) { config = config.syslog_config; }
+		
 		this.verbose("Setting up syslog " + config.syslog_server + " using port " + config.port);
 		
 		let numInterfaces;
@@ -563,13 +563,13 @@ module.exports = function () {
 	this.crossbar_setup = async function (config) {
 		this.verbose("Running crossbar_setup()...", 26);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("crossbar_config")) { config = config.crossbar_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for crossbar_setup");
 			return -1;
 		}
 
+		if (config.hasOwnProperty("crossbar_config")) { config = config.crossbar_config; }
+		
 		for (let i = 0; i < config.crossbars.length; i++) {
 			let c = i;
 			let xbar = config.crossbars[i].xbar_type;
@@ -601,12 +601,12 @@ module.exports = function () {
 	this.sdi_setup = async function (config) {
 		this.verbose("Running sdi_setup()...", 36);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("sdi_config")) { config = config.sdi_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for sdi_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("sdi_config")) { config = config.sdi_config; }
+		
 		let num_outs = (await allocated_indices("i_o_module.output", this.ip)).length;
 		if (num_outs == 0) {
 			this.debug("No SDI IO on this card!");
@@ -643,12 +643,12 @@ module.exports = function () {
 	this.video_transmitter_setup = async function (config) {
 		this.verbose("Running video_transmitter_setup()...", 41);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("video_transmitter_config")) { config = config.video_transmitter_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for video_transmitter_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("video_transmitter_config")) { config = config.video_transmitter_config; }
+		
 		let is_1_8 = await this.running_is_newer_than_or_same_as([1,8,0]);
 		for (let i = 0; i < config.transmitters.length; i++) {
 			await this.write("video_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[" + config.transmitters[i].pri_port + "].virtual_interfaces[0]", { ip: this.ip });
@@ -707,12 +707,12 @@ module.exports = function () {
 	this.audio_transmitter_setup = async function (config) {
 		this.verbose("Running audio_transmitter_setup()...", 51);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("audio_transmitter_config")) { config = config.audio_transmitter_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for audio_transmitter_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("audio_transmitter_config")) { config = config.audio_transmitter_config; }
+		
 		let is_1_8 = await this.running_is_newer_than_or_same_as([1,8,0]);
 		let promises = [...Array(config.transmitters.length).keys()].map(async i => {
 			let p = i; // TODO: Dynamically set p based on existing indices and the newly created one
@@ -757,12 +757,12 @@ module.exports = function () {
 	this.rtp_receiver_setup = async function (config) {
 		this.verbose("Running rtp_receiver_setup()...", 61);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("rtp_receiver_config")) { config = config.rtp_receiver_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for rtp_receiver_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("rtp_receiver_config")) { config = config.rtp_receiver_config; }
+		
 
 		// For 1.8 onwards
 		if (await this.running_is_newer_than_or_same_as([1,8,0])) {
@@ -862,12 +862,12 @@ module.exports = function () {
 	this.video_delay_setup = async function (config) {
 		this.verbose("Running video_delay_setup()...", 71);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("video_delay_config")) { config = config.video_delay_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for video_delay_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("video_delay_config")) { config = config.video_delay_config; }
+		
 		// let alloc = await allocated_indices("delay_handler.video.pool", this.ip)
 		// while (alloc.length < config.delays.length) {
 		// alloc = await allocated_indices("delay_handler.video.pool", this.ip)
@@ -912,12 +912,12 @@ module.exports = function () {
 	this.audio_delay_setup = async function (config) {
 		this.verbose("Running audio_delay_setup()...", 76);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("audio_delay_config")) { config = config.audio_delay_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for audio_delay_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("audio_delay_config")) { config = config.audio_delay_config; }
+		
 		let alloc = await allocated_indices("delay_handler.audio.pool", this.ip);
 		while (alloc.length < config.delays.length) {
 			await dispatch_change_request("delay_handler.audio", "create_delay", "Click", this.ip);
@@ -951,87 +951,87 @@ module.exports = function () {
 	this.routing = async function (config) {
 		this.verbose("Running routing()...", 81);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("routing_config")) { config = config.routing_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for routing");
 			return 1;
-		} else {
-			let num_outs = (await allocated_indices("i_o_module.output", this.ip)).length;
-			// for (let r of config.routes) {
-			let promises = config.routes.map(async r => {
-				if (r.hasOwnProperty("source") && r.hasOwnProperty("target")) {
-					let c;
-					let kwl = r.target.split(".");
-					if (["i_o_module"].includes(kwl[0])) {
-						if (num_outs == 0) {
-							this.debug("No SDI IO on this card! " + String(r.target));
-							return;
-						}
-						if (["audio_control"].includes(kwl[3])) {
-							c = "source_command";
-						} else if (["vid_src"].includes(kwl[3])) {
-							c = "v_src_command";
-						}
-					} else if (["video_transmitter"].includes(kwl[0])) {
-						if (["vid_source"].includes(kwl[2])) {
-							c = "v_src_command";
-						} else if (["audio_control"].includes(kwl[2])) {
-							c = "source_command";
-						}
-					} else if (["multiviewer"].includes(kwl[0])) {
-						if (["audio"].includes(kwl[3])) {
-							c = "a_src_command";
-							r.target = r.target.split(".").slice(0, 3).join(".");
-						} else if (["video"].includes(kwl[3])) {
-							c = "v_src_command";
-							r.target = r.target.split(".").slice(0, 3).join(".");
-						} else {
-							this.debug("Multiviewer needs .audio or .video!");
-						}
-					} else if (["audio_transmitter", "video_crossbar", "delay_handler"].includes(kwl[0])) {
-						c = "source_command";
-					} else if (["audio_crossbar"].includes(kwl[0])) {
-						if (r.hasOwnProperty("num_channels")) {
-							c = "source_command";
-							await this.write(r.target, "num_channels", r.num_channels, { ip: this.ip });
-						} else {
-							this.debug("Number of channels not defined: " + r.target);
-							return;
-						}
-					} else if (kwl[0] == "a_v_crossbar") {
-						if (["audio", "video"].includes(kwl[4])) {
-							c = kwl[4] + "_command";
-							r.target = r.target.split(".").slice(0, 4).join(".");
-						} else {
-							this.debug("AV Crossbar needs .audio or .video! " + r.target);
-						}
-					} else {
-						this.debug("Unknown target type: " + r.target);
+		}
+		if (config.hasOwnProperty("routing_config")) { config = config.routing_config; }
+		
+		let num_outs = (await allocated_indices("i_o_module.output", this.ip)).length;
+		// for (let r of config.routes) {
+		let promises = config.routes.map(async r => {
+			if (r.hasOwnProperty("source") && r.hasOwnProperty("target")) {
+				let c;
+				let kwl = r.target.split(".");
+				if (["i_o_module"].includes(kwl[0])) {
+					if (num_outs == 0) {
+						this.debug("No SDI IO on this card! " + String(r.target));
 						return;
 					}
-					let s;
-					if (r.source.split(".")[0] == "r_t_p_receiver") {
-						let rx = await read(r.source.split(".").slice(0, 3).join("."), "wrapped_reference", this.ip);
-						s = rx + "." + r.source.split(".").slice(3).join(".");
-					} else { s = r.source; }
-					if (r.source.split(".")[0] == "audio_crossbar") {
-						if (r.hasOwnProperty("num_channels")) {
-							await this.write(r.source.split(".").slice(0, 3).join("."), "num_channels", r.num_channels, { ip: this.ip });
-						} else {
-							this.debug("Number of channels not defined: " + r.source);
-							return;
-						}
+					if (["audio_control"].includes(kwl[3])) {
+						c = "source_command";
+					} else if (["vid_src"].includes(kwl[3])) {
+						c = "v_src_command";
 					}
-					await this.write(r.target, c, s, { ip: this.ip });
+				} else if (["video_transmitter"].includes(kwl[0])) {
+					if (["vid_source"].includes(kwl[2])) {
+						c = "v_src_command";
+					} else if (["audio_control"].includes(kwl[2])) {
+						c = "source_command";
+					}
+				} else if (["multiviewer"].includes(kwl[0])) {
+					if (["audio"].includes(kwl[3])) {
+						c = "a_src_command";
+						r.target = r.target.split(".").slice(0, 3).join(".");
+					} else if (["video"].includes(kwl[3])) {
+						c = "v_src_command";
+						r.target = r.target.split(".").slice(0, 3).join(".");
+					} else {
+						this.debug("Multiviewer needs .audio or .video!");
+					}
+				} else if (["audio_transmitter", "video_crossbar", "delay_handler"].includes(kwl[0])) {
+					c = "source_command";
+				} else if (["audio_crossbar"].includes(kwl[0])) {
+					if (r.hasOwnProperty("num_channels")) {
+						c = "source_command";
+						await this.write(r.target, "num_channels", r.num_channels, { ip: this.ip });
+					} else {
+						this.debug("Number of channels not defined: " + r.target);
+						return;
+					}
+				} else if (kwl[0] == "a_v_crossbar") {
+					if (["audio", "video"].includes(kwl[4])) {
+						c = kwl[4] + "_command";
+						r.target = r.target.split(".").slice(0, 4).join(".");
+					} else {
+						this.debug("AV Crossbar needs .audio or .video! " + r.target);
+					}
 				} else {
-					this.debug("Malformed route: " + r);
+					this.debug("Unknown target type: " + r.target);
+					return;
 				}
-			});
-			await Promise.all(promises);
-			this.verbose("Finished routing()...", 85);
-			return 1;
-		}
+				let s;
+				if (r.source.split(".")[0] == "r_t_p_receiver") {
+					let rx = await read(r.source.split(".").slice(0, 3).join("."), "wrapped_reference", this.ip);
+					s = rx + "." + r.source.split(".").slice(3).join(".");
+				} else { s = r.source; }
+				if (r.source.split(".")[0] == "audio_crossbar") {
+					if (r.hasOwnProperty("num_channels")) {
+						await this.write(r.source.split(".").slice(0, 3).join("."), "num_channels", r.num_channels, { ip: this.ip });
+					} else {
+						this.debug("Number of channels not defined: " + r.source);
+						return;
+					}
+				}
+				await this.write(r.target, c, s, { ip: this.ip });
+			} else {
+				this.debug("Malformed route: " + r);
+			}
+		});
+		await Promise.all(promises);
+		this.verbose("Finished routing()...", 85);
+		return 1;
+		
 	},
 
 	// Expected object format
@@ -1527,12 +1527,12 @@ module.exports = function () {
 	this.multiviewer_setup = async function (config) {
 		this.verbose("Running multiviewer_setup()...", 86);
 		if(!this.READY) { await this.basics(config);	}
-		if (config.hasOwnProperty("multiviewer_config")) { config = config.multiviewer_config; }
-		
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for multiviewer_setup");
 			return -1;
 		}
+		if (config.hasOwnProperty("multiviewer_config")) { config = config.multiviewer_config; }
+		
 		let fpga = await read("system", "selected_fpga", this.ip);
 		if (!fpga.toLowerCase().includes("multiviewer")) {
 			this.verbose("Card is not a multiviewer! Aborting multiviewer_setup(). " + fpga);
