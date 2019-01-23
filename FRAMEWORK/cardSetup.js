@@ -221,7 +221,7 @@ module.exports = function () {
 	*/
 	this.complete_setup = async function (user_config) {
 		let startTime = new Date();
-		if(!this.READY) { this.basics(user_config);	}
+		if(!this.READY) { await this.basics(user_config);	}
 
 		await this.system_setup(user_config.system_config);
 		await this.network_setup(user_config.network_config);
@@ -258,7 +258,7 @@ module.exports = function () {
 	*/
 	this.system_setup = async function (config) {
 		this.verbose("Running system_setup()...", 1);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("system_config")) { config = config.system_config; }
 
 		if (typeof config === "undefined") {
@@ -297,7 +297,7 @@ module.exports = function () {
 	*/
 	this.network_setup = async function (config) {
 		this.verbose("Running network_setup()...", 11);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("network_config")) { config = config.network_config; }
 
 		if (typeof config === "undefined") {
@@ -448,7 +448,7 @@ module.exports = function () {
 	*/
 	this.ptp_setup = async function (config) {
 		this.verbose("Running ptp_setup()...", 16);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("ptp_config")) { config = config.ptp_config; }
 		
 		if (typeof config === "undefined") {
@@ -506,7 +506,7 @@ module.exports = function () {
 	*/
 	this.syslog_setup = async function (config) {
 		this.verbose("Running syslog_setup()...", 21);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("syslog_config")) { config = config.syslog_config; }
 		
 		if (typeof config === "undefined") {
@@ -562,7 +562,7 @@ module.exports = function () {
 	*/
 	this.crossbar_setup = async function (config) {
 		this.verbose("Running crossbar_setup()...", 26);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("crossbar_config")) { config = config.crossbar_config; }
 		
 		if (typeof config === "undefined") {
@@ -600,7 +600,7 @@ module.exports = function () {
 	*/
 	this.sdi_setup = async function (config) {
 		this.verbose("Running sdi_setup()...", 36);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("sdi_config")) { config = config.sdi_config; }
 		
 		if (typeof config === "undefined") {
@@ -642,7 +642,7 @@ module.exports = function () {
 	*/
 	this.video_transmitter_setup = async function (config) {
 		this.verbose("Running video_transmitter_setup()...", 41);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("video_transmitter_config")) { config = config.video_transmitter_config; }
 		
 		if (typeof config === "undefined") {
@@ -706,7 +706,7 @@ module.exports = function () {
 	*/
 	this.audio_transmitter_setup = async function (config) {
 		this.verbose("Running audio_transmitter_setup()...", 51);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("audio_transmitter_config")) { config = config.audio_transmitter_config; }
 		
 		if (typeof config === "undefined") {
@@ -756,7 +756,7 @@ module.exports = function () {
 	*/
 	this.rtp_receiver_setup = async function (config) {
 		this.verbose("Running rtp_receiver_setup()...", 61);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("rtp_receiver_config")) { config = config.rtp_receiver_config; }
 		
 		if (typeof config === "undefined") {
@@ -861,7 +861,7 @@ module.exports = function () {
 	*/
 	this.video_delay_setup = async function (config) {
 		this.verbose("Running video_delay_setup()...", 71);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("video_delay_config")) { config = config.video_delay_config; }
 		
 		if (typeof config === "undefined") {
@@ -911,7 +911,7 @@ module.exports = function () {
 	*/
 	this.audio_delay_setup = async function (config) {
 		this.verbose("Running audio_delay_setup()...", 76);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("audio_delay_config")) { config = config.audio_delay_config; }
 		
 		if (typeof config === "undefined") {
@@ -950,7 +950,7 @@ module.exports = function () {
 	*/
 	this.routing = async function (config) {
 		this.verbose("Running routing()...", 81);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("routing_config")) { config = config.routing_config; }
 		
 		if (typeof config === "undefined") {
@@ -1526,7 +1526,7 @@ module.exports = function () {
 
 	this.multiviewer_setup = async function (config) {
 		this.verbose("Running multiviewer_setup()...", 86);
-		if(!this.READY) { this.basics(config);	}
+		if(!this.READY) { await this.basics(config);	}
 		if (config.hasOwnProperty("multiviewer_config")) { config = config.multiviewer_config; }
 		
 		if (typeof config === "undefined") {

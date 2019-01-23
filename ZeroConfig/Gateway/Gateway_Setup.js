@@ -1,31 +1,31 @@
 // Gateway Setup Script for C100
-// Version: 1.0
+// Version: 1.0 - Henrik Halvorsen
 // Supported C100 firmware versions: 1.8
 // User configuration section
 
 const user_configuration = {
 	network: {
 		mode: 
-			"40GbE",
-			//"10GbE",
+			//"40GbE",
+			"10GbE",
 		use_2022_7:
 			true,
 			//false,
 		ip_addresses: {
-			mgmt_front: "10.0.1.1/24",
-			mgmt_rear: "10.0.2.1/24",
+			mgmt_front: "10.3.143.33/20",
+			mgmt_rear: "10.3.143.34/20",
 			left_qsfp_40gbe: "10.10.0.1/24",
 			right_qsfp_40gbe: "10.20.0.1/24",
-			left_qsfp_10gbe: ["10.10.0.1/24", "10.10.0.2/24", "10.10.0.3/24", "10.10.0.4/24"],
-			right_qsfp_10gbe: ["10.20.0.1/24", "10.20.0.2/24", "10.20.0.3/24", "10.20.0.4/24"],
+			left_qsfp_10gbe: ["192.168.50.43/16", "192.168.50.47/16", "192.168.50.51/16", "192.168.50.55/16"],
+			right_qsfp_10gbe: ["192.168.250.43/16", "192.168.250.47/16", "192.168.250.51/16", "192.168.250.55/16"],
 		},
 		ptp: {
 			domain: 127,
 		},
 		syslog: {
 			enabled:
-				true,
-				//false,
+				//true,
+				false,
 			server: "192.168.0.1",
 			interface: 
 				"front", 
@@ -126,16 +126,18 @@ async function main() {
 	
 	// Step 1: Select the right FPGA. This requires a reboot, so if running the script from the web GUI it will have to be run again after the card comes back.
 	let current_fpga = await read("system", "selected_fpga");
-	let desired_fpga = "STREAMING" + user_configuration.network.mode == "40GbE" ? "_40GbE" : "";
+	let desired_fpga = "STREAMING" + (user_configuration.network.mode == "40GbE" ? "_40GbE" : "");
 	let requires_reboot = false;
+	inform("Checking FPGA selection...");
 	if (current_fpga != desired_fpga) {
+		inform("Current FPGA: " + current_fpga + ", script is for " + desired_fpga);
 		await dispatch_change_request("system", "select_fpga_command", desired_fpga);
 		await pause_ms(250);
-		inform("Selecting " + desired_fpga);
 		requires_reboot = true;
 	}
 
 	// Step 1.1: Set the Signal Generator format
+	inform("Selecting video signal generator format...");
 	await write("video_signal_generator", "standard_command", user_configuration.system.signal_gen_format);
 
 	// Step 2: Configure network settings. This requires a reboot, so if running the script from the web GUI it will have to be run again after the card comes back.
@@ -147,28 +149,30 @@ async function main() {
 	}
 	ip_address_list.push(user_configuration.network.ip_addresses.mgmt_front, user_configuration.network.ip_addresses.mgmt_rear);
 
+	inform("Checking IP address configuration...");
 	for (let i = 0; i < ip_address_list.length; i++) {
 		let current_ip = await read("network_interfaces.ports[" + i + "].current_configuration.base.ip_addresses[0]", "ip_address");
 		let current_prefix = await read("network_interfaces.ports[" + i + "].current_configuration.base.ip_addresses[0]", "prefix");
 		if (current_ip != ip_address_list[i].split("/")[0]) {
 			await write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", ip_address_list[i].split("/")[0]);
 			requires_reboot = true;
+			await dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
 		}
 		if (current_prefix != ip_address_list[i].split("/")[1]) {
 			await write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", ip_address_list[i].split("/")[1]);
 			requires_reboot = true;
+			await dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
 		}
-		await dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
 	}
 
 	// Step 3: Perform reboot, if required from above
 	if (requires_reboot) {
-		inform("Rebooting to apply FPGA and/or Network settings");
-		await reboot({ timeout: 120 });
-		inform("Reboot finished (or timed out)");
+		inform("Rebooting to apply FPGA and/or Network settings! If the script is running from the web GUI, run the script again once the card finishes rebooting.");
+		await dispatch_change_request("system", "reboot", "reboot");
 	}
 
 	// Step 4: Set up PTP. If using 2022-7, it will set up one agent on each port and combinator them.
+	inform("Setting up PTP agent(s)...")
 	await dispatch_change_request("p_t_p", "create_agent", "Click");
 	await pause_ms(250);
 
@@ -189,7 +193,7 @@ async function main() {
 		await pause_ms(500);
 		await write("time_flows.combinators[0].inputs[0]", "source_command", "p_t_p.agents[0].output");
 		await write("time_flows.combinators[0].inputs[1]", "source_command", "p_t_p.agents[1].output");
-		await write("time_flows.combinators[0]", "source_filter_command", "UsePTPOrBetter");
+		await write("time_flows.combinators[0]", "source_filter", "UsePTPOrBetter");
 		await write("p_t_p_clock", "input_command", "time_flows.combinators[0].output");
 	} else {
 		await write("p_t_p_clock", "input_command", "p_t_p.agents[0].output");
@@ -197,6 +201,7 @@ async function main() {
 
 	// Step 5: Set up Syslog (if enabled)
 	if (user_configuration.network.syslog.enabled) {
+		inform("Setting up Syslog...");
 		let interface_number;
 		if (user_configuration.network.syslog.interface == "front") {
 			interface_number = (user_configuration.network.mode == "40GbE" ? 2 : 8);
@@ -214,29 +219,45 @@ async function main() {
 
 	// Step 6: Set up crossbars
 	if (user_configuration.routing.mode == "AudioFollowsVideo") {
-		await create_table_row("a_v_crossbar.pool", "AV_Xbar");
-		await write("a_v_crossbar.pool[0]", "num_inputs", 107);
-		await write("a_v_crossbar.pool[0]", "num_outputs", 46);
+		inform("Creating AV crossbar...");
+		await create_table_row("a_v_crossbar.pool",  { desired_name: "AV_Xbar" });
+		await write("a_v_crossbar.pool[0]", "num_inputs", 37);
+		await write("a_v_crossbar.pool[0]", "num_outputs", 36);
 	} else if (user_configuration.routing.mode == "AudioIsSeparate") {
-		await create_table_row("video_crossbar.pool", "Video_Xbar");
-		await write("video_crossbar.pool[0]", "num_inputs", 107);
-		await write("video_crossbar.pool[0]", "num_outputs", 46);
+		inform("Creating Video and Audio crossbars...");
+		await create_table_row("video_crossbar.pool",  { desired_name: "Video_Xbar" });
+		await write("video_crossbar.pool[0]", "num_inputs", 37);
+		await write("video_crossbar.pool[0]", "num_outputs", 36);
 
-		await create_table_row("audio_crossbar.large", "Audio_Xbar");
-		await write("audio_crossbar.large[0]", "num_inputs", 107);
-		await write("audio_crossbar.large[0]", "num_outputs", 46);
-		for (let i = 0; i < 107; i++) { await write("audio_crossbar.large[0].inputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels); }
-		for (let i = 0; i < 46; i++) { await write("audio_crossbar.large[0].outputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels); }
+		await create_table_row("audio_crossbar.large", { desired_name: "Audio_Xbar" });
+		await write("audio_crossbar.large[0]", "num_inputs", 37);
+		await write("audio_crossbar.large[0]", "num_outputs", 36);
+		let input_promises = [...Array(37).keys()].map(async i => {
+			await write("audio_crossbar.large[0].inputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels); 
+		});
+		await Promise.all(input_promises);
+		let output_promises = [...Array(37).keys()].map(async i => {
+			await write("audio_crossbar.large[0].outputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels);  
+		});
+		await Promise.all(output_promises);
 	}
 
 	// Step 7: Configure SDI outputs
+	inform("Configuring SDI outputs...");
 	let sdi_inputs = (await allocated_indices("i_o_module.input")).length;
 	let sdi_outputs = (await allocated_indices("i_o_module.output")).length;
-	for (let i = 0; i < sdi_outputs; i++) {
+/*	for (let i = 0; i < sdi_outputs; i++) {
 		for (let j = 0; j < 8; j++) {
 			await write("i_o_module.output[" + i + "].sdi.audio_control.group_enable[" + j + "]", "group_command", "Embed");
 		}
-	}
+	} */
+	let promises = [...Array(sdi_outputs).keys()].map(async i => {
+		let sub_promises = [...Array(4).keys()].map(async j => {
+			await write("i_o_module.output[" + i + "].sdi.audio_control.group_enable[" + j + "]", "group_command", "Embed");
+		});
+		await Promise.all(sub_promises);
+	});
+	await Promise.all(promises);
 
 	// Step 8: Configure video transmitters
 	for (let i = 0; i < sdi_inputs; i++) {
@@ -248,7 +269,8 @@ async function main() {
 		await dispatch_change_request("video_transmitter.transmitter_assignment", "create_transmitter", "Click");
 	}
 
-	for (let i = 0; i < sdi_inputs; i++) {		
+	for (let i = 0; i < sdi_inputs; i++) {	
+		inform("Creating video transmitter " + JSON.stringify(user_configuration.streaming.video_transmitters[i]));
 		for (let j = 0; j < 8; j++) {
 			await write("video_transmitter.pool[" + i + "].audio_control.group_enable[" + j + "]", "group_command", "Embed");
 		}
@@ -274,15 +296,16 @@ async function main() {
 
 	// Step 9: Configure audio transmitters
 	for (let i = 0; i < sdi_inputs; i++) {
-		for (let i = 0; i < sdi_inputs; i++) {
-			if (user_configuration.network.mode == "40GbE") {
-				await write("audio_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[0].virtual_interfaces[0]");
-			} else if (user_configuration.network.mode == "10GbE") {
-				await write("audio_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[" + Math.floor((i * 4) / sdi_inputs) + "].virtual_interfaces[0]");
-			} 
-			await dispatch_change_request("audio_transmitter.transmitter_assignment", "create_transmitter", "Click");
-		}
+		if (user_configuration.network.mode == "40GbE") {
+			await write("audio_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+		} else if (user_configuration.network.mode == "10GbE") {
+			await write("audio_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[" + Math.floor((i * 4) / sdi_inputs) + "].virtual_interfaces[0]");
+		} 
+		await dispatch_change_request("audio_transmitter.transmitter_assignment", "create_transmitter", "Click");
+	}
 
+	for (let i = 0; i < sdi_inputs; i++) {
+		inform("Creating audio transmitter " + JSON.stringify(user_configuration.streaming.audio_transmitters[i]));
 		await write("audio_transmitter.pool[" + i + "]", "format_command", user_configuration.streaming.audio_transmitter_format);
 		await write("audio_transmitter.pool[" + i + "]", "packet_time_command", user_configuration.streaming.audio_packet_time);
 		await write("audio_transmitter.pool[" + i + "]", "num_channels_command", user_configuration.streaming.audio_streaming_channels);
@@ -307,60 +330,63 @@ async function main() {
 	await write("r_t_p_receiver.error_handling", "on_redundant_sdp", "DiscardAggressively");
 
 	for (let i = 0; i < sdi_outputs; i++) {
-		let s = await create_table_row("r_t_p_receiver.sessions");
+		let s = await create_table_row("r_t_p_receiver.sessions", { desired_name: "Video Receiver Session " + (i+1) });
+		inform("Creating RTP receiver " + s[0] + " for video...");
 		if (user_configuration.network.mode == "40GbE") {
-			await write("r_t_p_receiver.sessions[" + s + "].interfaces", "primary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+			await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "primary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
 		} else if (user_configuration.network.mode == "10GbE") {
-			await write("r_t_p_receiver.sessions[" + s + "].interfaces", "primary_command", "network_interfaces.ports[" + Math.floor((i * 4) / sdi_inputs) + "].virtual_interfaces[0]");
+			await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "primary_command", "network_interfaces.ports[" + Math.floor((i * 4) / sdi_outputs) + "].virtual_interfaces[0]");
 		} 
 
 		if (user_configuration.network.use_2022_7) {
 			if (user_configuration.network.mode == "40GbE") {
-				await write("r_t_p_receiver.sessions[" + s + "].interfaces", "secondary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+				await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "secondary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
 			} else if (user_configuration.network.mode == "10GbE") {
-				await write("r_t_p_receiver.sessions[" + s + "].interfaces", "secondary_command", "network_interfaces.ports[" + (Math.floor((i * 4) / sdi_inputs) + 4) + "].virtual_interfaces[0]");
+				await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "secondary_command", "network_interfaces.ports[" + (Math.floor((i * 4) / sdi_outputs) + 4) + "].virtual_interfaces[0]");
 			} 		
 		}
 
-		await write("r_t_p_receiver.sessions[" + s + "]", "switch_time_command", user_configuration.streaming.video_receivers.switch_time);
-		await write("r_t_p_receiver.sessions[" + s + "]", "switch_type_command", user_configuration.streaming.video_receivers.switch_mode);
+		await write("r_t_p_receiver.sessions[" + s[0] + "]", "switch_time_command", user_configuration.streaming.video_receivers.switch_time);
+		await write("r_t_p_receiver.sessions[" + s[0] + "]", "switch_type_command", user_configuration.streaming.video_receivers.switch_mode);
 
-		let v = await create_table_row("r_t_p_receiver.video_receivers");
-		await write("r_t_p_receiver.video_receivers[" + v + "].generic", "hosting_session_command", "r_t_p_receiver.sessions[" + s + "]");
-		await write("r_t_p_receiver.video_receivers[" + v + "].generic.timing", "read_delay_preference", "AsEarlyAsPossible");
-		await write("r_t_p_receiver.video_receivers[" + v + "].generic.timing", "phase_reference_command", "TimeSource");
-		await write("r_t_p_receiver.video_receivers[" + v + "].generic.timing", "time_source_command", "genlock.output");
+		let v = await create_table_row("r_t_p_receiver.video_receivers", { desired_name: "Video Receiver " + (i+1) });
+		await write("r_t_p_receiver.video_receivers[" + v[0] + "].generic", "hosting_session_command", "r_t_p_receiver.sessions[" + s[0] + "]");
+		await write("r_t_p_receiver.video_receivers[" + v[0] + "].generic.timing", "read_delay_preference", "AsEarlyAsPossible");
+		await write("r_t_p_receiver.video_receivers[" + v[0] + "].generic.timing", "phase_reference_command", "TimeSource");
+		await write("r_t_p_receiver.video_receivers[" + v[0] + "].generic.timing", "time_source_command", "genlock.output");
 
-		await write("r_t_p_receiver.sessions[" + s + "]", "active_command", true);
+		await write("r_t_p_receiver.sessions[" + s[0] + "]", "active_command", true);
 	}
 	for (let i = 0; i < sdi_outputs; i++) {
-		let s = await create_table_row("r_t_p_receiver.sessions");
+		let s = await create_table_row("r_t_p_receiver.sessions", { desired_name: "Audio Receiver Session " + (i+1) });
+		inform("Creating RTP receiver " + s[0] + " for audio...");
 		if (user_configuration.network.mode == "40GbE") {
-			await write("r_t_p_receiver.sessions[" + s + "].interfaces", "primary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+			await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "primary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
 		} else if (user_configuration.network.mode == "10GbE") {
-			await write("r_t_p_receiver.sessions[" + s + "].interfaces", "primary_command", "network_interfaces.ports[" + Math.floor((i * 4) / sdi_inputs) + "].virtual_interfaces[0]");
+			await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "primary_command", "network_interfaces.ports[" + Math.floor((i * 4) / sdi_outputs) + "].virtual_interfaces[0]");
 		} 
 
 		if (user_configuration.network.use_2022_7) {
 			if (user_configuration.network.mode == "40GbE") {
-				await write("r_t_p_receiver.sessions[" + s + "].interfaces", "secondary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+				await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "secondary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
 			} else if (user_configuration.network.mode == "10GbE") {
-				await write("r_t_p_receiver.sessions[" + s + "].interfaces", "secondary_command", "network_interfaces.ports[" + (Math.floor((i * 4) / sdi_inputs) + 4) + "].virtual_interfaces[0]");
+				await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "secondary_command", "network_interfaces.ports[" + (Math.floor((i * 4) / sdi_outputs) + 4) + "].virtual_interfaces[0]");
 			} 		
 		}
 
-		await write("r_t_p_receiver.sessions[" + s + "]", "switch_time_command", user_configuration.streaming.video_receivers.switch_time);
-		await write("r_t_p_receiver.sessions[" + s + "]", "switch_type_command", user_configuration.streaming.video_receivers.switch_mode);
+		await write("r_t_p_receiver.sessions[" + s[0] + "]", "switch_time_command", user_configuration.streaming.video_receivers.switch_time);
+		await write("r_t_p_receiver.sessions[" + s[0] + "]", "switch_type_command", user_configuration.streaming.video_receivers.switch_mode);
 
-		let a = await create_table_row("r_t_p_receiver.audio_receivers");
-		await write("r_t_p_receiver.audio_receivers[" + a + "].generic", "hosting_session_command", "r_t_p_receiver.sessions[" + s + "]");
-		await write("r_t_p_receiver.audio_receivers[" + a + "].audio_specific", "channel_capacity_command", user_configuration.streaming.audio_streaming_channels);
+		let a = await create_table_row("r_t_p_receiver.audio_receivers", { desired_name: "Audio Receiver " + (i+1) });
+		await write("r_t_p_receiver.audio_receivers[" + a[0] + "].generic", "hosting_session_command", "r_t_p_receiver.sessions[" + s[0] + "]");
+		await write("r_t_p_receiver.audio_receivers[" + a[0] + "].audio_specific", "channel_capacity_command", user_configuration.streaming.audio_streaming_channels);
 
-		await write("r_t_p_receiver.sessions[" + s + "]", "active_command", true);
+		await write("r_t_p_receiver.sessions[" + s[0] + "]", "active_command", true);
 	}
 
 
 	// Step 11: Assign signals to inputs (crossbars, SDI outputs, transmitters)
+	inform("Assigning signals to crossbar(s), SDI outputs and transmitters...")
 	if (user_configuration.routing.mode == "AudioFollowsVideo") {
 		// Step 11.1: Crossbar inputs
 		// Assign SDI inputs to 0-17
@@ -385,7 +411,7 @@ async function main() {
 
 		// Step 11.3: Transmitters
 		for (let i = 0, output = 18; i < sdi_outputs; i++, output++) {
-			await write("video_transmitter.pool[" + i + "]", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
+			await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
 			await write("audio_transmitter.pool[" + i + "]", "source_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.audio");
 			
 		}
@@ -394,17 +420,17 @@ async function main() {
 		// Step 11.1: Crossbar inputs
 		// Assign SDI inputs to 0-17
 		for (let i = 0, input = 0; i < sdi_inputs; i++, input++) {
-			await write("video_crossbar.pool[0].inputs[" + input + "].source", "video_command", "i_o_module.input[" + i + "].sdi.output.video");
-			await write("audio_crossbar.large[0].inputs[" + input + "].source", "audio_command", "i_o_module.input[" + i + "].sdi.output.audio"); 
+			await write("video_crossbar.pool[0].inputs[" + input + "]", "source_command", "i_o_module.input[" + i + "].sdi.output.video");
+			await write("audio_crossbar.large[0].inputs[" + input + "]", "source_command", "i_o_module.input[" + i + "].sdi.output.audio"); 
 		}
 		// Assign RTP receivers to inputs 18-36
 		for (let i = 0, input = 18; i < sdi_inputs; i++, input++) {
-			await write("video_crossbar.pool[0].inputs[" + input + "].source", "video_command", "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
-			await write("audio_crossbar.large[0].inputs[" + input + "].source", "audio_command", "r_t_p_receiver.audio_receivers[" + i + "].audio_specific.output"); 
+			await write("video_crossbar.pool[0].inputs[" + input + "]", "source_command", "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
+			await write("audio_crossbar.large[0].inputs[" + input + "]", "source_command", "r_t_p_receiver.audio_receivers[" + i + "].audio_specific.output"); 
 		}
 		// Assign test signal to input 36
-		await write("video_crossbar.pool[0].inputs[36].source", "video_command", "video_signal_generator.output");
-		await write("audio_crossbar.large[0].inputs[36].source", "audio_command", "audio_signal_generator.signal_aggregate.output"); 
+		await write("video_crossbar.pool[0].inputs[36]", "source_command", "video_signal_generator.output");
+		await write("audio_crossbar.large[0].inputs[36]", "source_command", "audio_signal_generator.signal_aggregate.output"); 
 
 		// Step 11.2: SDI Outputs
 		for (let i = 0, output = 0; i < sdi_outputs; i++, output++) {
@@ -414,16 +440,15 @@ async function main() {
 
 		// Step 11.3: Transmitters
 		for (let i = 0, output = 18; i < sdi_outputs; i++, output++) {
-			await write("video_transmitter.pool[" + i + "]", "v_src_command", "video_crossbar.pool[0].outputs[" + output + "].output");
+			await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "video_crossbar.pool[0].outputs[" + output + "].output");
 			await write("audio_transmitter.pool[" + i + "]", "source_command", "audio_crossbar.large[0].outputs[" + output + "].output");
 			
 		}
 	}
 
 	// Step 99: Reboot to publish crossbars to Ember
-	inform("Rebooting to apply update Ember+ tree with crossbars");
-	await reboot({ timeout: 120 });
-	inform("Reboot finished (or timed out)");
+	inform("Rebooting to apply update Ember+ tree with crossbars!");
+	await dispatch_change_request("system", "reboot", "reboot");
 
 }
 
