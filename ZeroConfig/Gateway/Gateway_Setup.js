@@ -101,7 +101,11 @@ const user_configuration = {
 			switch_time:
 				1, //Dirty switching
 				//2, //Clean switching, at next possible frame boundary
-		}
+		},
+		use_uhd: // If true, the first 5 (or less if fewer SDI inputs/outputs) video transmitters and receivers will be configured for UHD operation
+			true,
+			//false,
+	}
 	},
 	routing: {
 		mode:
@@ -115,7 +119,10 @@ const user_configuration = {
 			//"HD1080p59_94",
 			//"HD2160p60",
 			// Etc. etc.
-	}
+		frame_syncs: 
+			"OnInput",
+			//"OnOutput",
+			//"None",
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -172,7 +179,7 @@ async function main() {
 	}
 
 	// Step 4: Set up PTP. If using 2022-7, it will set up one agent on each port and combinator them.
-	inform("Setting up PTP agent(s)...")
+	inform("Setting up PTP agent(s)...");
 	await dispatch_change_request("p_t_p", "create_agent", "Click");
 	await pause_ms(250);
 
@@ -236,7 +243,7 @@ async function main() {
 			await write("audio_crossbar.large[0].inputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels); 
 		});
 		await Promise.all(input_promises);
-		let output_promises = [...Array(37).keys()].map(async i => {
+		let output_promises = [...Array(36).keys()].map(async i => {
 			await write("audio_crossbar.large[0].outputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels);  
 		});
 		await Promise.all(output_promises);
@@ -246,11 +253,7 @@ async function main() {
 	inform("Configuring SDI outputs...");
 	let sdi_inputs = (await allocated_indices("i_o_module.input")).length;
 	let sdi_outputs = (await allocated_indices("i_o_module.output")).length;
-/*	for (let i = 0; i < sdi_outputs; i++) {
-		for (let j = 0; j < 8; j++) {
-			await write("i_o_module.output[" + i + "].sdi.audio_control.group_enable[" + j + "]", "group_command", "Embed");
-		}
-	} */
+
 	let promises = [...Array(sdi_outputs).keys()].map(async i => {
 		let sub_promises = [...Array(4).keys()].map(async j => {
 			await write("i_o_module.output[" + i + "].sdi.audio_control.group_enable[" + j + "]", "group_command", "Embed");
@@ -277,6 +280,9 @@ async function main() {
 
 		await write("video_transmitter.pool[" + i + "]", "transport_format_command", "ST2110_GPM");
 		await write("video_transmitter.pool[" + i + "].constraints", "max_bandwidth_command", user_configuration.streaming.video_bandwidth_constraint);
+		if (i < 5 && user_configuration.streaming.use_uhd) {
+			await write("video_transmitter.pool[" + i + "].constraints", "reserve_uhd_resources_command", true);
+		}
 
 		let multicast_primary =  user_configuration.streaming.video_transmitters[i].multicast_primary + ":" + user_configuration.streaming.video_transmitters[i].port_primary;
 		await write("video_transmitter.pool[" + i + "].output_port[0]", "mc_address_command", multicast_primary);
@@ -354,6 +360,9 @@ async function main() {
 		await write("r_t_p_receiver.video_receivers[" + v[0] + "].generic.timing", "read_delay_preference", "AsEarlyAsPossible");
 		await write("r_t_p_receiver.video_receivers[" + v[0] + "].generic.timing", "phase_reference_command", "TimeSource");
 		await write("r_t_p_receiver.video_receivers[" + v[0] + "].generic.timing", "time_source_command", "genlock.output");
+		if (i < 5 && user_configuration.streaming.use_uhd) {
+			await write("r_t_p_receiver.video_receivers[" + v[0] + "].video_specific.capabilities", "supports_12g_command", true);
+		}
 
 		await write("r_t_p_receiver.sessions[" + s[0] + "]", "active_command", true);
 	}
@@ -386,7 +395,7 @@ async function main() {
 
 
 	// Step 11: Assign signals to inputs (crossbars, SDI outputs, transmitters)
-	inform("Assigning signals to crossbar(s), SDI outputs and transmitters...")
+	inform("Assigning signals to crossbar(s), SDI outputs and transmitters...");
 	if (user_configuration.routing.mode == "AudioFollowsVideo") {
 		// Step 11.1: Crossbar inputs
 		// Assign SDI inputs to 0-17
@@ -413,7 +422,6 @@ async function main() {
 		for (let i = 0, output = 18; i < sdi_outputs; i++, output++) {
 			await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
 			await write("audio_transmitter.pool[" + i + "]", "source_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.audio");
-			
 		}
 	} 
 	else if (user_configuration.routing.mode == "AudioIsSeparate") {
@@ -442,7 +450,6 @@ async function main() {
 		for (let i = 0, output = 18; i < sdi_outputs; i++, output++) {
 			await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "video_crossbar.pool[0].outputs[" + output + "].output");
 			await write("audio_transmitter.pool[" + i + "]", "source_command", "audio_crossbar.large[0].outputs[" + output + "].output");
-			
 		}
 	}
 
@@ -451,6 +458,5 @@ async function main() {
 	await dispatch_change_request("system", "reboot", "reboot");
 
 }
-
 
 main();
