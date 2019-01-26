@@ -105,12 +105,16 @@ const user_configuration = {
 		use_uhd: // If true, the first 5 (or less if fewer SDI inputs/outputs) video transmitters and receivers will be configured for UHD operation
 			true,
 			//false,
-	}
 	},
 	routing: {
 		mode:
+			//"NoRouting",
 			//"AudioFollowsVideo",
 			"AudioIsSeparate",
+		frame_syncs: // Frame syncs will be configured for the same format as the Signal Gen
+			"OnInput",
+			//"OnOutput",
+			//"None",
 	},
 	system: {
 		signal_gen_format:
@@ -119,10 +123,7 @@ const user_configuration = {
 			//"HD1080p59_94",
 			//"HD2160p60",
 			// Etc. etc.
-		frame_syncs: 
-			"OnInput",
-			//"OnOutput",
-			//"None",
+	},
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -149,9 +150,9 @@ async function main() {
 
 	// Step 2: Configure network settings. This requires a reboot, so if running the script from the web GUI it will have to be run again after the card comes back.
 	let ip_address_list = [];
-	if (user_configuration.network.mode === "40GbE") {
+	if (user_configuration.network.mode == "40GbE") {
 		ip_address_list.push(user_configuration.network.ip_addresses.left_qsfp_40gbe, user_configuration.network.ip_addresses.right_qsfp_40gbe);
-	} else if (user_configuration.network.mode === "10GbE") {
+	} else if (user_configuration.network.mode == "10GbE") {
 		ip_address_list = ip_address_list.concat(user_configuration.network.ip_addresses.left_qsfp_10gbe, user_configuration.network.ip_addresses.right_qsfp_10gbe);
 	}
 	ip_address_list.push(user_configuration.network.ip_addresses.mgmt_front, user_configuration.network.ip_addresses.mgmt_rear);
@@ -393,18 +394,52 @@ async function main() {
 		await write("r_t_p_receiver.sessions[" + s[0] + "]", "active_command", true);
 	}
 
+	// Step 11: Set up Frame Synchronizers
+	if (user_configuration.routing.frame_syncs != "None") {
+		inform("Creating Frame Syncs...");
+		let frame_sync_amount = 0;
+		if (user_configuration.routing.frame_syncs == "OnInput") {
+			frame_sync_amount = sdi_inputs;
+		} else if (user_configuration.routing.frame_syncs == "OnOutput") {
+			frame_sync_amount = sdi_outputs;
+		} 
+		let promises = [...Array(frame_sync_amount).keys()].map(async i => {
+			await dispatch_change_request("delay_handler.video", "create_delay", "Click");
+			await pause_ms(500);
+			await write("delay_handler.video.pool[" + i + "]", "num_outputs", 1);
+			await write("delay_handler.video.pool[" + i + "].allocate", "frames_command", 0, {
+				retry_until: async () => {
+					return (await read("delay_handler.video.pool[" + i + "].allocate", "frames_status") > 0);
+				}
+			});
+			await write("delay_handler.video.pool[" + i + "].allocate", "standard_command", user_configuration.system.signal_gen_format);
+			await write("delay_handler.video.pool[" + i + "].allocate", "delay_mode_command", "FrameSync_Freeze");
+			await write("delay_handler.video.pool[" + i + "].outputs[0].delay", "frames_command", 0, {
+				retry_until: async () => {
+					return (await read("delay_handler.video.pool[" + i + "].outputs[0].delay", "frames_status") > 0);
+				}
+			});
+		});
+		await Promise.all(promises);
+	}
 
-	// Step 11: Assign signals to inputs (crossbars, SDI outputs, transmitters)
+	// Step 90: Assign signals to inputs (crossbars, SDI outputs, transmitters)
 	inform("Assigning signals to crossbar(s), SDI outputs and transmitters...");
 	if (user_configuration.routing.mode == "AudioFollowsVideo") {
-		// Step 11.1: Crossbar inputs
+		// Step 90.1: Crossbar inputs
 		// Assign SDI inputs to 0-17
 		for (let i = 0, input = 0; i < sdi_inputs; i++, input++) {
-			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "video_command", "i_o_module.input[" + i + "].sdi.output.video");
+			if (user_configuration.routing.frame_syncs == "OnInput") {
+				await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "video_command", "delay_handler.video.pool[" + i + "].outputs[0].output");
+				await write("delay_handler.video.pool[" + input + "].inputs[0]", "source_command", "i_o_module.input[" + i + "].sdi.output.video");
+			} else {
+				await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "video_command", "i_o_module.input[" + i + "].sdi.output.video");
+			}
 			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "audio_command", "i_o_module.input[" + i + "].sdi.output.audio"); 
 		}
+
 		// Assign RTP receivers to inputs 18-36
-		for (let i = 0, input = 18; i < sdi_inputs; i++, input++) {
+		for (let i = 0, input = 18; i < sdi_outputs; i++, input++) {
 			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "video_command", "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
 			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "audio_command", "r_t_p_receiver.audio_receivers[" + i + "].audio_specific.output"); 
 		}
@@ -412,27 +447,37 @@ async function main() {
 		await write("a_v_crossbar.pool[0].inputs[36].source", "video_command", "video_signal_generator.output");
 		await write("a_v_crossbar.pool[0].inputs[36].source", "audio_command", "audio_signal_generator.signal_aggregate.output"); 
 		
-		// Step 11.2: SDI Outputs
+		// Step 90.2: SDI Outputs
 		for (let i = 0, output = 0; i < sdi_outputs; i++, output++) {
-			await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
+			if (user_configuration.routing.frame_syncs == "OnOutput") {
+				await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "delay_handler.video.pool[" + i + "].outputs[0].output");
+				await write("delay_handler.video.pool[" + i + "].inputs[0]", "source_command",  "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
+			} else {
+				await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
+			}
 			await write("i_o_module.output[" + i + "].sdi.audio_control", "source_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.audio");
 		}
 
-		// Step 11.3: Transmitters
-		for (let i = 0, output = 18; i < sdi_outputs; i++, output++) {
+		// Step 90.3: Transmitters
+		for (let i = 0, output = 18; i < sdi_inputs; i++, output++) {
 			await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
 			await write("audio_transmitter.pool[" + i + "]", "source_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.audio");
 		}
 	} 
 	else if (user_configuration.routing.mode == "AudioIsSeparate") {
-		// Step 11.1: Crossbar inputs
+		// Step 90.1: Crossbar inputs
 		// Assign SDI inputs to 0-17
 		for (let i = 0, input = 0; i < sdi_inputs; i++, input++) {
-			await write("video_crossbar.pool[0].inputs[" + input + "]", "source_command", "i_o_module.input[" + i + "].sdi.output.video");
+			if (user_configuration.routing.frame_syncs == "OnInput") {
+				await write("video_crossbar.pool[0].inputs[" + input + "]", "source_command", "delay_handler.video.pool[" + i + "].outputs[0].output");
+				await write("delay_handler.video.pool[" + input + "].inputs[0]", "source_command", "i_o_module.input[" + i + "].sdi.output.video");
+			} else {
+				await write("video_crossbar.pool[0].inputs[" + input + "]", "source_command", "i_o_module.input[" + i + "].sdi.output.video");
+			}
 			await write("audio_crossbar.large[0].inputs[" + input + "]", "source_command", "i_o_module.input[" + i + "].sdi.output.audio"); 
 		}
 		// Assign RTP receivers to inputs 18-36
-		for (let i = 0, input = 18; i < sdi_inputs; i++, input++) {
+		for (let i = 0, input = 18; i < sdi_outputs; i++, input++) {
 			await write("video_crossbar.pool[0].inputs[" + input + "]", "source_command", "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
 			await write("audio_crossbar.large[0].inputs[" + input + "]", "source_command", "r_t_p_receiver.audio_receivers[" + i + "].audio_specific.output"); 
 		}
@@ -440,23 +485,33 @@ async function main() {
 		await write("video_crossbar.pool[0].inputs[36]", "source_command", "video_signal_generator.output");
 		await write("audio_crossbar.large[0].inputs[36]", "source_command", "audio_signal_generator.signal_aggregate.output"); 
 
-		// Step 11.2: SDI Outputs
+		// Step 90.2: SDI Outputs
 		for (let i = 0, output = 0; i < sdi_outputs; i++, output++) {
-			await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "video_crossbar.pool[0].outputs[" + output + "].output");
-			await write("i_o_module.output[" + i + "].sdi.audio_control", "source_command", "audio_crossbar.large[0].outputs[" + output + "].output");
+			if (user_configuration.routing.frame_syncs == "OnOutput") {
+				await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "delay_handler.video.pool[" + i + "].outputs[0].output");
+				await write("delay_handler.video.pool[" + i + "].inputs[0]", "source_command",  "video_crossbar.pool[0].outputs[" + output + "].output");
+			} else {
+				await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
+			}
+			await write("i_o_module.output[" + i + "].sdi.audio_control", "source_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.audio");
 		}
 
-		// Step 11.3: Transmitters
-		for (let i = 0, output = 18; i < sdi_outputs; i++, output++) {
+		// Step 90.3: Transmitters
+		for (let i = 0, output = 18; i < sdi_inputs; i++, output++) {
 			await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "video_crossbar.pool[0].outputs[" + output + "].output");
 			await write("audio_transmitter.pool[" + i + "]", "source_command", "audio_crossbar.large[0].outputs[" + output + "].output");
 		}
 	}
+	else if (user_configuration.routing.mode == "NoRouting") {
+
+	}
 
 	// Step 99: Reboot to publish crossbars to Ember
 	inform("Rebooting to apply update Ember+ tree with crossbars!");
+	await write("system.usrinfo", "towel", "");
 	await dispatch_change_request("system", "reboot", "reboot");
-
+	
+	return 1;
 }
 
-main();
+await main();
