@@ -503,7 +503,27 @@ async function main() {
 		}
 	}
 	else if (user_configuration.routing.mode == "NoRouting") {
+		// Step 90.1: SDI inputs to transmitters (via FS if applicable)
+		for (let i = 0; i < sdi_inputs; i++) {
+			if (user_configuration.routing.frame_syncs == "OnInput") {
+				await write("delay_handler.video.pool[" + i + "].inputs[0]", "source_command", "i_o_module.input[" + i + "].sdi.output.video");
+				await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "delay_handler.video.pool[" + i + "].outputs[0].output");
+			} else {
+				await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "i_o_module.input[" + i + "].sdi.output.video");
+			}
+			await write("audio_transmitter.pool[" + i + "]", "source_command", "i_o_module.input[" + i + "].sdi.output.audio");
+		}
 
+		//Step 90.2: RTP receivers to SDI outputs
+		for (let i = 0; i < sdi_outputs; i++) {
+			if (user_configuration.routing.frame_syncs == "OnOutput") {
+				await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "delay_handler.video.pool[" + i + "].outputs[0].output");
+				await write("delay_handler.video.pool[" + i + "].inputs[0]", "source_command",  "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
+			} else {
+				await write("i_o_module.output[" + i + "].sdi.vid_src", "v_src_command", "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
+			}
+			await write("i_o_module.output[" + i + "].sdi.audio_control", "source_command", "r_t_p_receiver.audio_receivers[" + i + "].audio_specific.output");
+		}
 	}
 
 	// Step 99: Reboot to publish crossbars to Ember
