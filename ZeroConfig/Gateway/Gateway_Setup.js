@@ -410,7 +410,8 @@ async function main() {
 		} else if (user_configuration.routing.frame_syncs == "OnOutput") {
 			frame_sync_amount = sdi_outputs;
 		} 
-		let promises = [...Array(frame_sync_amount).keys()].map(async i => {
+		//let promises = [...Array(frame_sync_amount).keys()].map(async i => {
+		for (let i = 0; i < frame_sync_amount; i++) {
 			await dispatch_change_request("delay_handler.video", "create_delay", "Click");
 			await pause_ms(500);
 			await write("delay_handler.video.pool[" + i + "]", "num_outputs", 1);
@@ -426,8 +427,9 @@ async function main() {
 					return (await read("delay_handler.video.pool[" + i + "].outputs[0].delay", "frames_status") > 0);
 				}
 			});
-		});
-		await Promise.all(promises);
+		}
+		//});
+		//await Promise.all(promises);
 	}
 
 	// Step 90: Assign signals to inputs (crossbars, SDI outputs, transmitters)
