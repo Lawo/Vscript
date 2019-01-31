@@ -167,7 +167,7 @@ async function main() {
 			await dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
 		}
 		if (current_prefix != ip_address_list[i].split("/")[1]) {
-			await write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", ip_address_list[i].split("/")[1]);
+			await write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(ip_address_list[i].split("/")[1]));
 			requires_reboot = true;
 			await dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
 		}
