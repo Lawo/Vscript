@@ -144,7 +144,14 @@ async function main() {
 		requires_reboot = true;
 	}
 
-	// Step 1.1: Set the Signal Generator format
+	// Step 1.1: Perform reboot, if required from above
+	if (requires_reboot) {
+		inform("Rebooting to apply FPGA and/or Network settings! If the script is running from the web GUI, run the script again once the card finishes rebooting.");
+		await dispatch_change_request("system", "reboot", "reboot");
+	}
+
+
+	// Step 1.2: Set the Signal Generator format
 	inform("Selecting video signal generator format...");
 	await write("video_signal_generator", "standard_command", user_configuration.system.signal_gen_format);
 
