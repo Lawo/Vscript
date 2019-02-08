@@ -354,7 +354,7 @@ async function main() {
 
 		if (user_configuration.network.use_2022_7) {
 			if (user_configuration.network.mode == "40GbE") {
-				await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "secondary_command", "network_interfaces.ports[0].virtual_interfaces[0]");
+				await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "secondary_command", "network_interfaces.ports[1].virtual_interfaces[0]");
 			} else if (user_configuration.network.mode == "10GbE") {
 				await write("r_t_p_receiver.sessions[" + s[0] + "].interfaces", "secondary_command", "network_interfaces.ports[" + (Math.floor((i * 4) / sdi_outputs) + 4) + "].virtual_interfaces[0]");
 			} 		
