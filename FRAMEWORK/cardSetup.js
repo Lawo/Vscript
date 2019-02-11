@@ -746,6 +746,7 @@ module.exports = function () {
 			if (!is_1_8) { await this.write("audio_transmitter.pool[" + p + "].output_port[0]", "active_command", true, { ip: this.ip }); }
 			if (config.transmitters[i].hasOwnProperty("sec_port")) {
 				await this.write("audio_transmitter.pool[" + p + "].output_port[1]", "interface_command", "network_interfaces.ports[" + config.transmitters[i].sec_port + "].virtual_interfaces[0]", { ip: this.ip });
+				await this.write("audio_transmitter.pool[" + p + "].output_port[1]", "ip_src_ip_addr_command", config.addresses[config.transmitters[i].sec_port], { ip: this.ip });
 				await this.write("audio_transmitter.pool[" + p + "].output_port[1]", "mc_address_command", config.transmitters[i].sec_mc, { ip: this.ip });
 				if (config.transmitters[i].hasOwnProperty("payload")) {
 					await this.write("audio_transmitter.pool[" + p + "].output_port[1]", "payload_type_command", config.transmitters[i].payload, { ip: this.ip });
