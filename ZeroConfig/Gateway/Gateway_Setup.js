@@ -115,6 +115,13 @@ const user_configuration = {
 			"OnInput",
 			//"OnOutput",
 			//"None",
+		crossbar_layout:
+			"Compact", // Only assigns the signals that exist within the config
+			// "Standardised", // Leaves blanks where signals could go in the future, such as always leaving 18 inputs AND outputs for SDI
+		crossbar_names: {
+			video: "VIDEO",
+			audio: "AUDIO", // If AudioIsSeparate
+		},
 	},
 	system: {
 		signal_gen_format:
@@ -153,6 +160,7 @@ async function main() {
 
 	// Step 1.2: Set the Signal Generator format
 	inform("Selecting video signal generator format...");
+	await component_is_online("video_signal_generator");
 	await write("video_signal_generator", "standard_command", user_configuration.system.signal_gen_format);
 
 	// Step 2: Configure network settings. This requires a reboot, so if running the script from the web GUI it will have to be run again after the card comes back.
@@ -188,6 +196,7 @@ async function main() {
 
 	// Step 4: Set up PTP. If using 2022-7, it will set up one agent on each port and combinator them.
 	inform("Setting up PTP agent(s)...");
+	await component_is_online("p_t_p");
 	await dispatch_change_request("p_t_p", "create_agent", "Click");
 	await pause_ms(250);
 
@@ -235,23 +244,23 @@ async function main() {
 	// Step 6: Set up crossbars
 	if (user_configuration.routing.mode == "AudioFollowsVideo") {
 		inform("Creating AV crossbar...");
-		await create_table_row("a_v_crossbar.pool",  { desired_name: "AV_Xbar" });
-		await write("a_v_crossbar.pool[0]", "num_inputs", 37);
-		await write("a_v_crossbar.pool[0]", "num_outputs", 36);
+		await create_table_row("a_v_crossbar.pool",  { desired_name: user_configuration.routing.crossbar_names.video });
+		await write("a_v_crossbar.pool[0]", "num_inputs", 107);
+		await write("a_v_crossbar.pool[0]", "num_outputs", 46);
 	} else if (user_configuration.routing.mode == "AudioIsSeparate") {
 		inform("Creating Video and Audio crossbars...");
-		await create_table_row("video_crossbar.pool",  { desired_name: "Video_Xbar" });
-		await write("video_crossbar.pool[0]", "num_inputs", 37);
-		await write("video_crossbar.pool[0]", "num_outputs", 36);
+		await create_table_row("video_crossbar.pool",  { desired_name: user_configuration.routing.crossbar_names.video });
+		await write("video_crossbar.pool[0]", "num_inputs", 107);
+		await write("video_crossbar.pool[0]", "num_outputs", 46);
 
-		await create_table_row("audio_crossbar.large", { desired_name: "Audio_Xbar" });
-		await write("audio_crossbar.large[0]", "num_inputs", 37);
-		await write("audio_crossbar.large[0]", "num_outputs", 36);
-		let input_promises = [...Array(37).keys()].map(async i => {
+		await create_table_row("audio_crossbar.large", { desired_name: user_configuration.routing.crossbar_names.audio });
+		await write("audio_crossbar.large[0]", "num_inputs", 107);
+		await write("audio_crossbar.large[0]", "num_outputs", 46);
+		let input_promises = [...Array(107).keys()].map(async i => {
 			await write("audio_crossbar.large[0].inputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels); 
 		});
 		await Promise.all(input_promises);
-		let output_promises = [...Array(36).keys()].map(async i => {
+		let output_promises = [...Array(46).keys()].map(async i => {
 			await write("audio_crossbar.large[0].outputs["+ i + "]", "num_channels", user_configuration.streaming.audio_streaming_channels);  
 		});
 		await Promise.all(output_promises);
@@ -448,13 +457,13 @@ async function main() {
 		}
 
 		// Assign RTP receivers to inputs 18-36
-		for (let i = 0, input = 18; i < sdi_outputs; i++, input++) {
+		for (let i = 0, input = user_configuration.routing.crossbar_layout === "Compact" ? sdi_inputs : 18; i < sdi_outputs; i++, input++) {
 			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "video_command", "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
 			await write("a_v_crossbar.pool[0].inputs[" + input + "].source", "audio_command", "r_t_p_receiver.audio_receivers[" + i + "].audio_specific.output"); 
 		}
 		// Assign test signal to input 36
-		await write("a_v_crossbar.pool[0].inputs[36].source", "video_command", "video_signal_generator.output");
-		await write("a_v_crossbar.pool[0].inputs[36].source", "audio_command", "audio_signal_generator.signal_aggregate.output"); 
+		await write("a_v_crossbar.pool[0].inputs[" + (user_configuration.routing.crossbar_layout === "Compact" ? 20 : 36) + "].source", "video_command", "video_signal_generator.output");
+		await write("a_v_crossbar.pool[0].inputs[" + (user_configuration.routing.crossbar_layout === "Compact" ? 20 : 36) + "].source", "audio_command", "audio_signal_generator.signal_aggregate.output"); 
 		
 		// Step 90.2: SDI Outputs
 		for (let i = 0, output = 0; i < sdi_outputs; i++, output++) {
@@ -468,7 +477,7 @@ async function main() {
 		}
 
 		// Step 90.3: Transmitters
-		for (let i = 0, output = 18; i < sdi_inputs; i++, output++) {
+		for (let i = 0, output = user_configuration.routing.crossbar_layout === "Compact" ? sdi_inputs : 18; i < sdi_inputs; i++, output++) {
 			await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.video");
 			await write("audio_transmitter.pool[" + i + "]", "source_command", "a_v_crossbar.pool[0].outputs[" + output + "].output.audio");
 		}
@@ -486,13 +495,13 @@ async function main() {
 			await write("audio_crossbar.large[0].inputs[" + input + "]", "source_command", "i_o_module.input[" + i + "].sdi.output.audio"); 
 		}
 		// Assign RTP receivers to inputs 18-36
-		for (let i = 0, input = 18; i < sdi_outputs; i++, input++) {
+		for (let i = 0, input = user_configuration.routing.crossbar_layout === "Compact" ? sdi_inputs : 18; i < sdi_outputs; i++, input++) {
 			await write("video_crossbar.pool[0].inputs[" + input + "]", "source_command", "r_t_p_receiver.video_receivers[" + i + "].video_specific.output.video");
 			await write("audio_crossbar.large[0].inputs[" + input + "]", "source_command", "r_t_p_receiver.audio_receivers[" + i + "].audio_specific.output"); 
 		}
 		// Assign test signal to input 36
-		await write("video_crossbar.pool[0].inputs[36]", "source_command", "video_signal_generator.output");
-		await write("audio_crossbar.large[0].inputs[36]", "source_command", "audio_signal_generator.signal_aggregate.output"); 
+		await write("video_crossbar.pool[0].inputs[" + (user_configuration.routing.crossbar_layout) === "Compact" ? 20 : 36 + "]", "source_command", "video_signal_generator.output");
+		await write("audio_crossbar.large[0].inputs[" + (user_configuration.routing.crossbar_layout) === "Compact" ? 20 : 36 + "]", "source_command", "audio_signal_generator.signal_aggregate.output"); 
 
 		// Step 90.2: SDI Outputs
 		for (let i = 0, output = 0; i < sdi_outputs; i++, output++) {
@@ -506,7 +515,7 @@ async function main() {
 		}
 
 		// Step 90.3: Transmitters
-		for (let i = 0, output = 18; i < sdi_inputs; i++, output++) {
+		for (let i = 0, output = user_configuration.routing.crossbar_layout === "Compact" ? sdi_inputs : 18; i < sdi_inputs; i++, output++) {
 			await write("video_transmitter.pool[" + i + "].vid_source", "v_src_command", "video_crossbar.pool[0].outputs[" + output + "].output");
 			await write("audio_transmitter.pool[" + i + "]", "source_command", "audio_crossbar.large[0].outputs[" + output + "].output");
 		}
