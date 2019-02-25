@@ -26,18 +26,5 @@ module.exports = {
             "error",
             "always"
         ]
-    },
-    "globals": {
-        "allocated_indices": false,
-        "create_table_row": false,
-        "inform": false,
-        "warn": false,
-        "is_reachable": false,
-        "reboot": false,
-        "reset": false,
-        "read": false,
-        "write": false,
-        "dispatch_change_request": false,
-        "pause_ms": false
     }
 };

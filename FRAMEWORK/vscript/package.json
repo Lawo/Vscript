@@ -1,0 +1,22 @@
+{
+  "name": "vscript",
+  "version": "0.0.135",
+  "description": "vscript library - experimental version",
+  "files": [
+    "cli/",
+    "common/"
+  ],
+  "dependencies": {
+    "bufferutil": "^3.0.3",
+    "commander": "^2.14.1",
+    "fs-extra": "^5.0.0",
+    "influx": "^5.0.7",
+    "ip": "^1.1.5",
+    "node-uuid": "^1.4.8",
+    "prando": "^3.0.3",
+    "seedrandom": "^2.4.3",
+    "ssh2": "^0.6.0",
+    "utf-8-validate": "^4.0.0",
+    "ws": "^3.3.2"
+  }
+}

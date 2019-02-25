@@ -1,0 +1,1 @@
+"use strict";function pause(e){return new Promise(s=>{setTimeout(()=>{s()},1e3*e)})}function pause_ms(e){return new Promise(s=>{setTimeout(()=>{s()},e)})}Object.defineProperty(exports,"__esModule",{value:!0}),exports.pause=pause,exports.pause_ms=pause_ms;

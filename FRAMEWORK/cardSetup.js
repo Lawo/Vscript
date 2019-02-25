@@ -2,7 +2,7 @@
 /**
 * @fileOverview Functions for simplifying setup of a C100
 * @author <a href="mailto:henrik.halvorsen@lawo.com">Henrik Halvorsen</a>
-* @version 1.1
+* @version 1.2
 */
 
 /**
@@ -13,7 +13,10 @@
 //TODO: add function for other commands
 //TODO: function for setting static SDP
 
+
 module.exports = function () {
+	const vscript = require("./vscript/common/api/api_base");
+	const MultiConnection = require("./vscript/common/multi_connection");
 	this.STATUS_FLAG = false;
 	this.DEBUG = true;
 	this.ip = "";
@@ -43,7 +46,7 @@ module.exports = function () {
 	 */
 	this.write = async function(kwl_name, kw_name, payload, options) {
 		this.debug("write()ing \"" + payload + "\" to \"" + kwl_name + "." + kw_name + "\"");
-		await write(kwl_name, kw_name, payload, options);
+		await vscript.write(kwl_name, kw_name, payload, options);
 	},
 
 	/**
@@ -55,7 +58,7 @@ module.exports = function () {
 			if (this.STATUS_FLAG) {
 				this.status[this.ip] = Object.assign(this.status[this.ip], { Time: this.getTimeStamp(), Debug: debug_string });
 			} else {
-				warn(this.getTimeStamp() + " DEBUG (" + this.ip + "): " + debug_string);
+				vscript.warn(this.getTimeStamp() + " DEBUG (" + this.ip + "): " + debug_string);
 			}
 		}
 	},
@@ -73,7 +76,7 @@ module.exports = function () {
 				this.status[this.ip] = Object.assign(this.status[this.ip], { Time: this.getTimeStamp(), Status: verbose_string });
 			}
 		} else {
-			inform(this.getTimeStamp() + " VERBOSE (" + this.ip + "): " + verbose_string);
+			vscript.inform(this.getTimeStamp() + " VERBOSE (" + this.ip + "): " + verbose_string);
 		}
 	},
 
@@ -84,10 +87,10 @@ module.exports = function () {
 	* @return {number} The table index of the created row
 	*/
 	this.create_new_row = async function (table, row_name = "") {
-		let existing_rows = await allocated_indices(table, this.ip);
+		let existing_rows = await vscript.allocated_indices(table, { ip: this.ip} );
 		this.debug("Existing rows: " + existing_rows);
-		await create_table_row(table, { desired_name: row_name, ip: this.ip });
-		let new_rows = await allocated_indices(table, this.ip);
+		await vscript.create_table_row(table, { desired_name: row_name, ip: this.ip });
+		let new_rows = await vscript.allocated_indices(table, { ip: this.ip} );
 		this.debug("Created row in " + table + ": " + new_rows.filter(x => !existing_rows.includes(x))[0]);
 		return new_rows.filter(x => !existing_rows.includes(x))[0];
 	},
@@ -97,8 +100,8 @@ module.exports = function () {
 	 * @return {number[]} Array containing current version, represented as [1,2,3]
 	 */
 	this.get_version = async function () {
-		let partition = await read("system", "booted_partition", this.ip);
-		let version = await read("system.partitions."+partition.replace(/\s+/g, "").toLowerCase(), "version", this.ip);
+		let partition = await vscript.read("system", "booted_partition", { ip: this.ip} );
+		let version = await vscript.read("system.partitions."+partition.replace(/\s+/g, "").toLowerCase(), "version", { ip: this.ip} );
 		this.version = version.split(".", 3);
 		return this.version;
 	},
@@ -191,11 +194,12 @@ module.exports = function () {
 		this.ip = user_config.ip;
 
 		this.verbose("Attempting to connect to card...", 0);
-		if (!(await is_reachable(this.ip))) {
-			warn("Unable to reach " + this.ip);
+		if (!(await vscript.is_reachable(this.ip))) {
+			vscript.warn("Unable to reach " + { ip: this.ip} );
 			return 1;
 		}
 		await this.get_version();
+		MultiConnection.initialize("Running script from framework!", "Don't touch me!");
 		this.READY = true;
 	},
 
@@ -239,7 +243,7 @@ module.exports = function () {
 
 		if (user_config.hasOwnProperty("reboot") && user_config.reboot === true) {
 			this.verbose("Configuration finished, rebooting to publish Ember+", 95);
-			await reboot({ timeout: 120, ip: this.ip });
+			await vscript.reboot({ timeout: 120, ip: this.ip });
 		}
 
 		let endTime = new Date();
@@ -267,18 +271,18 @@ module.exports = function () {
 
 		if (config.reset) {
 			this.verbose("Resetting card, waiting...", 5);
-			await reset({ ip: this.ip });
+			await vscript.reset({ ip: this.ip });
 			this.verbose("Reset finished (or timed out)");
 		}
-		let curr = await read("system", "selected_fpga", this.ip);
+		let curr = await vscript.read("system", "selected_fpga", { ip: this.ip} );
 		if (curr == config.fpga) {
-			this.verbose("Correct FPGA already selected: " + curr);
+			this.verbose("Correct FPGA alvscript.ready selected: " + curr);
 		} else if (["streaming", "multiviewer", "streaming_40gbe", "multiviewer_40gbe"].includes(config.fpga.toLowerCase())) {
-			await dispatch_change_request("system", "select_fpga_command", config.fpga.toUpperCase().replace("GBE", "GbE"), this.ip);
-			await pause_ms(250);
+			await vscript.dispatch_change_request("system", "select_fpga_command", config.fpga.toUpperCase().replace("GBE", "GbE"), { ip: this.ip} );
+			await vscript.pause_ms(250);
 			this.verbose("Selecting " + config.fpga.toUpperCase().replace("GBE", "GbE") + " and rebooting...");
-			//this.verbose("Current config is " + (await read("system", "selected_fpga", this.ip)));
-			await reboot({ timeout: 120, ip: this.ip });
+			//this.verbose("Current config is " + (await vscript.read("system", "selected_fpga", this.ip)));
+			await vscript.reboot({ timeout: 120, ip: this.ip });
 			this.verbose("Reboot finished (or timed out)");
 		}
 		this.verbose("Finished system_setup()...", 10);
@@ -321,116 +325,13 @@ module.exports = function () {
 		for (let i = 0; i < numInterfaces; i++) {
 			await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i], { ip: this.ip });
 			await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[i]), { ip: this.ip });
-			await dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", this.ip);
+			await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", { ip: this.ip} );
 		}
 
-		// End**********************
-
-		/* NOT fully tested as I was afraid of testing it remotly :-)
-
-        if (config.mode === "40gbe" && config.addresses.length === 2 && config.prefixes.length === 2) {
-                numInterfaces = 4;
-        } else if (config.mode === "10gbe" && config.addresses.length === 8 && config.prefixes.length === 8) {
-                numInterfaces = 10;
-        } else {
-                return -1;
-        }
-
-        switch (numInterfaces) {
-                case 4:
-                   for (let i = 0; i < 4; i++) {
-
-                        let brief_if = await read("network_interfaces.ports["+i+"]", "brief", this.ip);
-
-                        switch (brief_if) {
-                                case "P1 (left 40G port)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[0], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[0]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "P2 (right 40G port)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[1], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[1]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "Management Port (front)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", (config.front_mgmt).split("/")[0], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt((config.front_mgmt).split("/")[1]), {ip: this.ip}) ;
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "Management Port (back)":
-										await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", (config.rear_mgmt).split("/")[0], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt((config.rear_mgmt).split("/")[1]), {ip: this.ip}) ;
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                        }
-                }
-                   break;
-
-               case 10:
-                   for (let i = 0; i < 10; i++) {
-                        let brief_if = await read("network_interfaces.ports["+i+"]", "brief", this.ip);
-                        switch (brief_if) {
-                                case "P1\/0 (leftmost 10G lane of left 40G port)":
-                                      await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[0], {ip: this.ip});
-                                      await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[0]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "P1\/1 (second 10G lane of left 40G port)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[1], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[1]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "P1\/2 (third 10G lane of left 40G port)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[2], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[2]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "P1\/3 (rightmost 10G lane of left 40G port)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[3], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[3]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "P2\/0 (leftmost 10G lane of right 40G port)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[4], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[4]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "P2\/1 (second 10G lane of right 40G port)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[5], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[5]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "P2\/2 (third 10G lane of right 40G port)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[6], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[6]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "P2\/3 (rightmost 10G lane of right 40G port)":
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[7], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[7]), {ip: this.ip});
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "Management Port (front)":
-                                      await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", (config.front_mgmt).split("/")[0], {ip: this.ip});
-                                      await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt((config.front_mgmt).split("/")[1]), {ip: this.ip}) ;
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                case "Management Port (back)":
-                                      await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "ip_address", (config.rear_mgmt).split("/")[0], {ip: this.ip});
-                                        await this.write("network_interfaces.ports["+i+"].desired_configuration.base.ip_addresses[0]", "prefix", parseInt((config.rear_mgmt).split("/")[1]), {ip: this.ip}) ;
-                                        await dispatch_change_request("network_interfaces.ports["+i+"]", "save_config", "Click", this.ip);
-                                        break;
-                                }
-                   }
-                   break;
-        }
-
-	*/
 
 		// If a reboot is requested,perform it
 		if (config.reboot === true) {
-			await reboot({ timeout: 120, ip: this.ip });
+			await vscript.reboot({ timeout: 120, ip: this.ip });
 		}
 
 		// Return 1 to indicate success (otherwise, -1)
@@ -457,11 +358,11 @@ module.exports = function () {
 		
 		let a = 0;
 
-		let alloc = await allocated_indices("p_t_p.agents", this.ip);
+		let alloc = await vscript.allocated_indices("p_t_p.agents", { ip: this.ip} );
 		while (!alloc.includes(0)) {
-			await dispatch_change_request("p_t_p", "create_agent", "Click", this.ip);
-			await pause_ms(250);
-			alloc = await allocated_indices("p_t_p.agents", this.ip);
+			await vscript.dispatch_change_request("p_t_p", "create_agent", "Click", { ip: this.ip} );
+			await vscript.pause_ms(250);
+			alloc = await vscript.allocated_indices("p_t_p.agents", { ip: this.ip} );
 		}
 		this.verbose("Setting up agent " + a + " using port " + config.port + " to listen in domain " + config.domain);
 		await this.write("p_t_p.agents[" + a + "]", "hosting_port_command", "p_t_p.ports[" + config.port + "]", { ip: this.ip });
@@ -473,8 +374,8 @@ module.exports = function () {
 		// new
 		if (config.hasOwnProperty("sec_port")) {
 			a = 1;
-			await dispatch_change_request("p_t_p", "create_agent", "Click", this.ip);
-			await pause_ms(250);
+			await vscript.dispatch_change_request("p_t_p", "create_agent", "Click", { ip: this.ip} );
+			await vscript.pause_ms(250);
 			this.verbose("Setting up agent " + a + " using port " + config.sec_port + " to listen in domain " + config.domain);
 			await this.write("p_t_p.agents[" + a + "]", "hosting_port_command", "p_t_p.ports[" + config.sec_port + "]", { ip: this.ip });
 			await this.write("p_t_p.agents[" + a + "]", "domain_command", config.domain, { ip: this.ip });
@@ -482,8 +383,8 @@ module.exports = function () {
 			await this.write("p_t_p.agents[" + a + "]", "utc_offsets", config.utc, { ip: this.ip });
 			await this.write("p_t_p_clock", "input_command", "p_t_p.agents[" + a + "].output", { ip: this.ip });
 
-			await dispatch_change_request("time_flows", "create_combinator", "Click", this.ip);
-			await pause_ms(500);
+			await vscript.dispatch_change_request("time_flows", "create_combinator", "Click", { ip: this.ip} );
+			await vscript.pause_ms(500);
 			await this.write("time_flows.combinators[0].inputs[0]", "source_command", "p_t_p.agents[0].output", { ip: this.ip });
 			await this.write("time_flows.combinators[0].inputs[1]", "source_command", "p_t_p.agents[1].output", { ip: this.ip });
 			await this.write("p_t_p_clock", "input_command", "time_flows.combinators[0].output", { ip: this.ip });
@@ -525,25 +426,25 @@ module.exports = function () {
 		}
 
 		let promises = [...Array(numInterfaces).keys()].map(async i => {
-			let brief_if = await read("network_interfaces.ports[" + i + "]", "brief", this.ip);
+			let brief_if = await vscript.read("network_interfaces.ports[" + i + "]", "brief", { ip: this.ip} );
 
 			if (brief_if === "Management Port (back)" && config.port === "rear") {
 				await this.write("network_interfaces.ports[" + i + "].desired_syslog_configuration.syslog_servers[0]", "protocol", config.protocol, { ip: this.ip });
 				await this.write("network_interfaces.ports[" + i + "].desired_syslog_configuration.syslog_servers[0]", "address", config.syslog_server, { ip: this.ip });
 				await this.write("network_interfaces.ports[3].desired_syslog_configuration.syslog_servers[0]", "rebind_interval", config.rebind_interval, { ip: this.ip });
-				await dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", this.ip);
-				await pause_ms(250);
-				await dispatch_change_request("network_interfaces", "save_syslog_config", "Click", this.ip);
-				await pause_ms(500);
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", { ip: this.ip} );
+				await vscript.pause_ms(250);
+				await vscript.dispatch_change_request("network_interfaces", "save_syslog_config", "Click", { ip: this.ip} );
+				await vscript.pause_ms(500);
 			}
 			if (brief_if === "Management Port (front)" && config.port === "front") {
 				await this.write("network_interfaces.ports[" + i + "].desired_syslog_configuration.syslog_servers[0]", "protocol", config.protocol, { ip: this.ip });
 				await this.write("network_interfaces.ports[" + i + "].desired_syslog_configuration.syslog_servers[0]", "address", config.syslog_server, { ip: this.ip });
 				await this.write("network_interfaces.ports[3].desired_syslog_configuration.syslog_servers[0]", "rebind_interval", config.rebind_interval, { ip: this.ip });
-				await dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", this.ip);
-				await pause_ms(250);
-				await dispatch_change_request("network_interfaces", "save_syslog_config", "Click", this.ip);
-				await pause_ms(500);
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", { ip: this.ip} );
+				await vscript.pause_ms(250);
+				await vscript.dispatch_change_request("network_interfaces", "save_syslog_config", "Click", { ip: this.ip} );
+				await vscript.pause_ms(500);
 			}
 		});
 		await Promise.all(promises);
@@ -607,7 +508,7 @@ module.exports = function () {
 		}
 		if (config.hasOwnProperty("sdi_config")) { config = config.sdi_config; }
 		
-		let num_outs = (await allocated_indices("i_o_module.output", this.ip)).length;
+		let num_outs = (await vscript.allocated_indices("i_o_module.output", this.ip)).length;
 		if (num_outs == 0) {
 			this.debug("No SDI IO on this card!");
 			return -1;
@@ -653,15 +554,15 @@ module.exports = function () {
 		let is_1_8 = await this.running_is_newer_than_or_same_as([1,8,0]);
 		for (let i = 0; i < config.transmitters.length; i++) {
 			await this.write("video_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[" + config.transmitters[i].pri_port + "].virtual_interfaces[0]", { ip: this.ip });
-			await dispatch_change_request("video_transmitter.transmitter_assignment", "create_transmitter", "Click", this.ip);
+			await vscript.dispatch_change_request("video_transmitter.transmitter_assignment", "create_transmitter", "Click", { ip: this.ip} );
 		}
 		let promises = [...Array(config.transmitters.length).keys()].map(async i => {
 			let p = i; // TODO: Dynamically set p based on existing indices and the newly created one
 			
 			if (config.transmitters[i].hasOwnProperty("sec_port")) {
-				await dispatch_change_request("video_transmitter.pool[" + p + "]", "add_new_output", "Click", this.ip);
+				await vscript.dispatch_change_request("video_transmitter.pool[" + p + "]", "add_new_output", "Click", { ip: this.ip} );
 			}
-			await pause_ms(250);
+			await vscript.pause_ms(250);
 
 			// Set the audio group controls (Embed, Bypass, Off)
 			for (let j = 0; j < 4; j++) {
@@ -725,9 +626,9 @@ module.exports = function () {
 		let promises = [...Array(config.transmitters.length).keys()].map(async i => {
 			let p = i; // TODO: Dynamically set p based on existing indices and the newly created one
 			await this.write("audio_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[" + config.transmitters[i].pri_port + "].virtual_interfaces[0]", { ip: this.ip });
-			await dispatch_change_request("audio_transmitter.transmitter_assignment", "create_transmitter", "Click", this.ip);
-			if (config.transmitters[i].hasOwnProperty("sec_port")) { await dispatch_change_request("audio_transmitter.pool[" + p + "]", "add_new_output", "Click", this.ip); }
-			await pause_ms(250);
+			await vscript.dispatch_change_request("audio_transmitter.transmitter_assignment", "create_transmitter", "Click", { ip: this.ip} );
+			if (config.transmitters[i].hasOwnProperty("sec_port")) { await vscript.dispatch_change_request("audio_transmitter.pool[" + p + "]", "add_new_output", "Click", { ip: this.ip} ); }
+			await vscript.pause_ms(250);
 
 			await this.write("audio_transmitter.pool[" + p + "]", "format_command", config.transmitters[i].format, { ip: this.ip });
 			await this.write("audio_transmitter.pool[" + p + "]", "packet_time_command", config.transmitters[i].packet_time, { ip: this.ip });
@@ -805,14 +706,14 @@ module.exports = function () {
 				}
 
 				let audio_promises = [...Array(config.receivers[i].num_audio).keys()].map(async j => {
-					let a = await read("r_t_p_receiver.sessions[" + s + "].audio_receivers[" + j + "]", "wrapped_reference", this.ip);
+					let a = await vscript.read("r_t_p_receiver.sessions[" + s + "].audio_receivers[" + j + "]", "wrapped_reference", { ip: this.ip} );
 					await this.write(a + ".audio_specific", "channel_capacity_command", config.receivers[i].audio_ch, { ip: this.ip });
 				});
 				await Promise.all(audio_promises);
 
 				let video_promises = [...Array(config.receivers[i].num_video).keys()].map(async j => {
-					let v = await read("r_t_p_receiver.sessions[" + s + "].video_receivers[" + j + "]", "wrapped_reference", this.ip);
-					await this.write(v + ".generic.timing", "read_delay_preference", "AsEarlyAsPossible", { ip: this.ip });
+					let v = await vscript.read("r_t_p_receiver.sessions[" + s + "].video_receivers[" + j + "]", "wrapped_reference", { ip: this.ip} );
+					await this.write(v + ".generic.timing", "vscript.read_delay_preference", "AsEarlyAsPossible", { ip: this.ip });
 					await this.write(v + ".generic.timing", "phase_reference_command", "TimeSource", { ip: this.ip });
 					await this.write(v + ".generic.timing", "time_source_command", "genlock.output", { ip: this.ip });
 				});
@@ -825,8 +726,8 @@ module.exports = function () {
 		// For versions prior to 1.8
 		else {
 			for (let i = 0; i < config.receivers.length; i++) {
-				await dispatch_change_request("r_t_p_receiver", "create_session", "Click", this.ip);
-				await pause_ms(250);
+				await vscript.dispatch_change_request("r_t_p_receiver", "create_session", "Click", { ip: this.ip} );
+				await vscript.pause_ms(250);
 				await this.write("r_t_p_receiver.sessions[" + i + "]", "num_video_receivers_command", config.receivers[i].num_video, { ip: this.ip });
 				await this.write("r_t_p_receiver.sessions[" + i + "]", "num_audio_receivers_command", config.receivers[i].num_audio, { ip: this.ip });
 			}
@@ -840,7 +741,7 @@ module.exports = function () {
 				let s = i;
 
 				let sub_promises = [...Array(config.receivers[i].num_audio).keys()].map(async j => {
-					let aud_rec = await read("r_t_p_receiver.sessions[" + s + "].audio_receivers[" + j + "]", "wrapped_reference", this.ip);
+					let aud_rec = await vscript.read("r_t_p_receiver.sessions[" + s + "].audio_receivers[" + j + "]", "wrapped_reference", { ip: this.ip} );
 					await this.write(aud_rec + ".audio_specific", "channel_capacity_command", config.receivers[i].audio_ch, { ip: this.ip });
 				});
 				await Promise.all(sub_promises);
@@ -851,7 +752,7 @@ module.exports = function () {
 				if (config.receivers[i].hasOwnProperty("sec_port")) { await this.write("r_t_p_receiver.sessions[" + s + "]", "secondary_interface_command", "network_interfaces.ports[" + config.receivers[i].sec_port + "].virtual_interfaces[0]", { ip: this.ip }); }
 
 				sub_promises = [...Array(config.receivers[i].num_video).keys()].map(async j => {
-					let vid_rec = await read("r_t_p_receiver.sessions[" + s + "].video_receivers[" + j + "]", "wrapped_reference", this.ip);
+					let vid_rec = await vscript.read("r_t_p_receiver.sessions[" + s + "].video_receivers[" + j + "]", "wrapped_reference", { ip: this.ip} );
 					await this.write(vid_rec + ".video_specific.phase", "relative_to_command", "genlock.output", { ip: this.ip });
 				});
 				await Promise.all(sub_promises);
@@ -882,19 +783,19 @@ module.exports = function () {
 		}
 		if (config.hasOwnProperty("video_delay_config")) { config = config.video_delay_config; }
 		
-		// let alloc = await allocated_indices("delay_handler.video.pool", this.ip)
+		// let alloc = await vscript.allocated_indices("delay_handler.video.pool", this.ip)
 		// while (alloc.length < config.delays.length) {
-		// alloc = await allocated_indices("delay_handler.video.pool", this.ip)
+		// alloc = await vscript.allocated_indices("delay_handler.video.pool", this.ip)
 		// }
 
 		let promises = [...Array(config.delays.length).keys()].map(async i => {
-			await dispatch_change_request("delay_handler.video", "create_delay", "Click", this.ip);
-			await pause_ms(250);
+			await vscript.dispatch_change_request("delay_handler.video", "create_delay", "Click", { ip: this.ip} );
+			await vscript.pause_ms(250);
 			await this.write("delay_handler.video.pool[" + i + "]", "id_command", config.delays[i].name, { ip: this.ip });
 			await this.write("delay_handler.video.pool[" + i + "]", "num_outputs", 1, { ip: this.ip });
 			await this.write("delay_handler.video.pool[" + i + "].allocate", "frames_command", 0, {
 				retry_until: async () => {
-					return (await read("delay_handler.video.pool[" + i + "].allocate", "frames_status", this.ip) > 0);
+					return (await vscript.read("delay_handler.video.pool[" + i + "].allocate", "frames_status", this.ip) > 0);
 				},
 				ip: this.ip
 			});
@@ -902,7 +803,7 @@ module.exports = function () {
 			await this.write("delay_handler.video.pool[" + i + "].allocate", "delay_mode_command", config.delays[i].mode, { ip: this.ip });
 			await this.write("delay_handler.video.pool[" + i + "].outputs[0].delay", "frames_command", 0, {
 				retry_until: async () => {
-					return (await read("delay_handler.video.pool[" + i + "].outputs[0].delay", "frames_status", this.ip) > 0);
+					return (await vscript.read("delay_handler.video.pool[" + i + "].outputs[0].delay", "frames_status", this.ip) > 0);
 				},
 				ip: this.ip
 			});
@@ -932,11 +833,11 @@ module.exports = function () {
 		}
 		if (config.hasOwnProperty("audio_delay_config")) { config = config.audio_delay_config; }
 		
-		let alloc = await allocated_indices("delay_handler.audio.pool", this.ip);
+		let alloc = await vscript.allocated_indices("delay_handler.audio.pool", { ip: this.ip} );
 		while (alloc.length < config.delays.length) {
-			await dispatch_change_request("delay_handler.audio", "create_delay", "Click", this.ip);
-			await pause_ms(250);
-			alloc = await allocated_indices("delay_handler.audio.pool", this.ip);
+			await vscript.dispatch_change_request("delay_handler.audio", "create_delay", "Click", { ip: this.ip} );
+			await vscript.pause_ms(250);
+			alloc = await vscript.allocated_indices("delay_handler.audio.pool", { ip: this.ip} );
 		}
 
 		let promises = [...Array(config.delays.length).keys()].map(async i => {
@@ -971,7 +872,7 @@ module.exports = function () {
 		}
 		if (config.hasOwnProperty("routing_config")) { config = config.routing_config; }
 		
-		let num_outs = (await allocated_indices("i_o_module.output", this.ip)).length;
+		let num_outs = (await vscript.allocated_indices("i_o_module.output", this.ip)).length;
 		// for (let r of config.routes) {
 		let promises = config.routes.map(async r => {
 			if (r.hasOwnProperty("source") && r.hasOwnProperty("target")) {
@@ -1026,7 +927,7 @@ module.exports = function () {
 				}
 				let s;
 				if (r.source.split(".")[0] == "r_t_p_receiver") {
-					let rx = await read(r.source.split(".").slice(0, 3).join("."), "wrapped_reference", this.ip);
+					let rx = await vscript.read(r.source.split(".").slice(0, 3).join("."), "wrapped_reference", { ip: this.ip} );
 					s = rx + "." + r.source.split(".").slice(3).join(".");
 				} else { s = r.source; }
 				if (r.source.split(".")[0] == "audio_crossbar") {
@@ -1547,7 +1448,7 @@ module.exports = function () {
 		}
 		if (config.hasOwnProperty("multiviewer_config")) { config = config.multiviewer_config; }
 		
-		let fpga = await read("system", "selected_fpga", this.ip);
+		let fpga = await vscript.read("system", "selected_fpga", { ip: this.ip} );
 		if (!fpga.toLowerCase().includes("multiviewer")) {
 			this.verbose("Card is not a multiviewer! Aborting multiviewer_setup(). " + fpga);
 			return -1;
@@ -1583,8 +1484,8 @@ module.exports = function () {
 					await this.write(l_kwl, p + "_update", h.layout.update[p], { ip: this.ip });
 				}
 				await this.write(l_kwl, "virtual_output", h_kwl, { ip: this.ip });
-				await dispatch_change_request(l_kwl, "activate", "Click", this.ip);
-				await pause_ms(500);
+				await vscript.dispatch_change_request(l_kwl, "activate", "Click", { ip: this.ip} );
+				await vscript.pause_ms(500);
 			}
 
 			if (h.hasOwnProperty("global_settings")) {
