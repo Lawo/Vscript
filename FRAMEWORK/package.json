@@ -1,7 +1,7 @@
 {
   "name": "cardsetup",
   "version": "1.0.0",
-  "description": "",
+  "description": "Framework for C100 configuration",
   "main": "cardSetup.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -15,5 +15,12 @@
     "eslint-plugin-node": "^8.0.0",
     "eslint-plugin-promise": "^4.0.1",
     "eslint-plugin-standard": "^4.0.0"
+  },
+  "dependencies": {
+    "fs-extra": "^7.0.1",
+    "influx": "^5.0.7",
+    "ip": "^1.1.5",
+    "ssh2": "^0.8.2",
+    "ws": "^6.1.4"
   }
 }

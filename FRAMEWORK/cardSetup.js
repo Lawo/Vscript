@@ -10,6 +10,7 @@
 * @desc Module containing all functions for complete C100 setup
 */
 //TODO: add audio channel count to crossbar_setup
+//TODO: add audio srcs
 //TODO: add function for other commands
 //TODO: function for setting static SDP
 
@@ -17,6 +18,7 @@
 module.exports = function () {
 	const vscript = require("./vscript/common/api/api_base");
 	const MultiConnection = require("./vscript/common/multi_connection");
+
 	this.STATUS_FLAG = false;
 	this.DEBUG = true;
 	this.ip = "";
@@ -58,7 +60,7 @@ module.exports = function () {
 			if (this.STATUS_FLAG) {
 				this.status[this.ip] = Object.assign(this.status[this.ip], { Time: this.getTimeStamp(), Debug: debug_string });
 			} else {
-				vscript.warn(this.getTimeStamp() + " DEBUG (" + this.ip + "): " + debug_string);
+				console.log("[" + this.getTimeStamp() + "] DEBUG (" + this.ip + "): " + debug_string);
 			}
 		}
 	},
@@ -193,13 +195,14 @@ module.exports = function () {
 		user_config = JSON.parse(JSON.stringify(user_config));
 		this.ip = user_config.ip;
 
+		MultiConnection.initialize("Running script from framework!", "Don't touch me!");
+
 		this.verbose("Attempting to connect to card...", 0);
 		if (!(await vscript.is_reachable(this.ip))) {
 			vscript.warn("Unable to reach " + { ip: this.ip} );
 			return 1;
 		}
 		await this.get_version();
-		MultiConnection.initialize("Running script from framework!", "Don't touch me!");
 		this.READY = true;
 	},
 
@@ -356,14 +359,9 @@ module.exports = function () {
 		}
 		if (config.hasOwnProperty("ptp_config")) { config = config.ptp_config; }
 		
-		let a = 0;
-
-		let alloc = await vscript.allocated_indices("p_t_p.agents", { ip: this.ip} );
-		while (!alloc.includes(0)) {
-			await vscript.dispatch_change_request("p_t_p", "create_agent", "Click", { ip: this.ip} );
-			await vscript.pause_ms(250);
-			alloc = await vscript.allocated_indices("p_t_p.agents", { ip: this.ip} );
-		}
+		let a = 0;			
+		await vscript.dispatch_change_request("p_t_p", "create_agent", "Click", { ip: this.ip} );
+		await vscript.pause_ms(250);
 		this.verbose("Setting up agent " + a + " using port " + config.port + " to listen in domain " + config.domain);
 		await this.write("p_t_p.agents[" + a + "]", "hosting_port_command", "p_t_p.ports[" + config.port + "]", { ip: this.ip });
 		await this.write("p_t_p.agents[" + a + "]", "domain_command", config.domain, { ip: this.ip });
@@ -383,10 +381,10 @@ module.exports = function () {
 			await this.write("p_t_p.agents[" + a + "]", "utc_offsets", config.utc, { ip: this.ip });
 			await this.write("p_t_p_clock", "input_command", "p_t_p.agents[" + a + "].output", { ip: this.ip });
 
-			await vscript.dispatch_change_request("time_flows", "create_combinator", "Click", { ip: this.ip} );
-			await vscript.pause_ms(500);
+			await vscript.create_table_row("time_flows.combinators", { desired_name: "PTP_combinator", ip: this.ip} );
 			await this.write("time_flows.combinators[0].inputs[0]", "source_command", "p_t_p.agents[0].output", { ip: this.ip });
 			await this.write("time_flows.combinators[0].inputs[1]", "source_command", "p_t_p.agents[1].output", { ip: this.ip });
+			if (this.running_is_newer_than_or_same_as([1,8,232])) { await this.write("time_flows.combinators[0]", "quorum_command", 1, { ip: this.ip }); }
 			await this.write("p_t_p_clock", "input_command", "time_flows.combinators[0].output", { ip: this.ip });
 		} //
 		if (config.hasOwnProperty("BB")) {
@@ -508,7 +506,7 @@ module.exports = function () {
 		}
 		if (config.hasOwnProperty("sdi_config")) { config = config.sdi_config; }
 		
-		let num_outs = (await vscript.allocated_indices("i_o_module.output", this.ip)).length;
+		let num_outs = (await vscript.allocated_indices("i_o_module.output", { ip: this.ip})).length;
 		if (num_outs == 0) {
 			this.debug("No SDI IO on this card!");
 			return -1;
@@ -713,7 +711,7 @@ module.exports = function () {
 
 				let video_promises = [...Array(config.receivers[i].num_video).keys()].map(async j => {
 					let v = await vscript.read("r_t_p_receiver.sessions[" + s + "].video_receivers[" + j + "]", "wrapped_reference", { ip: this.ip} );
-					await this.write(v + ".generic.timing", "vscript.read_delay_preference", "AsEarlyAsPossible", { ip: this.ip });
+					await this.write(v + ".generic.timing", "read_delay_preference", "AsEarlyAsPossible", { ip: this.ip });
 					await this.write(v + ".generic.timing", "phase_reference_command", "TimeSource", { ip: this.ip });
 					await this.write(v + ".generic.timing", "time_source_command", "genlock.output", { ip: this.ip });
 				});
