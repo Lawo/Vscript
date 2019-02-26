@@ -1,10 +1,11 @@
 {
   "name": "cardsetup",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Framework for C100 configuration",
   "main": "cardSetup.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "jsdoc -d ./docs/ cardSetup.js"
   },
   "author": "",
   "license": "ISC",

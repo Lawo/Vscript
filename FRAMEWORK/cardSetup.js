@@ -78,7 +78,9 @@ module.exports = function () {
 				this.status[this.ip] = Object.assign(this.status[this.ip], { Time: this.getTimeStamp(), Status: verbose_string });
 			}
 		} else {
-			vscript.inform(this.getTimeStamp() + " VERBOSE (" + this.ip + "): " + verbose_string);
+			vscript.inform(this.getTimeStamp() + " VERBOSE (" + this.ip + "): " + verbose_string);		
+			vscript.dispatch_change_request("system.usrinfo", "cur_status", verbose_string, { ip: this.ip });
+
 		}
 	},
 
@@ -195,7 +197,7 @@ module.exports = function () {
 		user_config = JSON.parse(JSON.stringify(user_config));
 		this.ip = user_config.ip;
 
-		MultiConnection.initialize("Running script from framework!", "Don't touch me!");
+		MultiConnection.initialize("Running script from framework!", "");
 
 		this.verbose("Attempting to connect to card...", 0);
 		if (!(await vscript.is_reachable(this.ip))) {
@@ -254,6 +256,10 @@ module.exports = function () {
 		let minutes = Math.floor(sec / 60);
 		sec = sec - (60 * minutes);
 		this.verbose("Finihed! It took " + minutes + " minutes and " + sec + " seconds.", 100);
+
+		await this.write("system.usrinfo", "towel", "", { ip: this.ip });
+		await this.write("system.usrinfo", "cur_status", "", { ip: this.ip });
+
 		return 1;
 	},
 
@@ -831,7 +837,7 @@ module.exports = function () {
 	/**
 	* Setup function for audio delay handlers
 	* @param {object} config - The object containing the configuration parameters
-	* @param {object[]} config.delays - Array containing one or more deay handler configuration objects
+	* @param {object[]} config.delays - Array containing one or more delay handler configuration objects
 	* @param {string} config.delays[].name - The name for the delay handler instance
 	* @param {number} config.delays[].num_channels - The number of audio channels in the input
 	* @param {string} [config.delays[].frequency] - The delay handler frequency; default: "F48000" | "F96000"
@@ -847,14 +853,16 @@ module.exports = function () {
 		}
 		if (config.hasOwnProperty("audio_delay_config")) { config = config.audio_delay_config; }
 		
-		let alloc = await vscript.allocated_indices("delay_handler.audio.pool", { ip: this.ip} );
-		while (alloc.length < config.delays.length) {
-			await vscript.dispatch_change_request("delay_handler.audio", "create_delay", "Click", { ip: this.ip} );
-			await vscript.pause_ms(250);
-			alloc = await vscript.allocated_indices("delay_handler.audio.pool", { ip: this.ip} );
-		}
+		// let alloc = await vscript.allocated_indices("delay_handler.audio.pool", { ip: this.ip} );
+		// while (alloc.length < config.delays.length) {
+		// 	await vscript.dispatch_change_request("delay_handler.audio", "create_delay", "Click", { ip: this.ip} );
+		// 	await vscript.pause_ms(250);
+		// 	alloc = await vscript.allocated_indices("delay_handler.audio.pool", { ip: this.ip} );
+		// }
 
 		let promises = [...Array(config.delays.length).keys()].map(async i => {
+			await vscript.dispatch_change_request("delay_handler.audio", "create_delay", "Click", { ip: this.ip });
+			await vscript.pause_ms(250);
 			await this.write("delay_handler.audio.pool[" + i + "]", "id_command", config.delays[i].name, { ip: this.ip });
 			await this.write("delay_handler.audio.pool[" + i + "]", "num_outputs", 1, { ip: this.ip });
 			await this.write("delay_handler.audio.pool[" + i + "].allocate", "frequency_command", (config.delays[i].hasOwnProperty("frequency") ? config.delays[i].frequency : "F48000"), { ip: this.ip });
@@ -866,6 +874,34 @@ module.exports = function () {
 		await Promise.all(promises);
 
 		this.verbose("Finished audio_delay_setup()...", 80);
+		return 1;
+	},
+
+	/**
+	* Setup function for audio SRC handlers
+	* @param {object} config - The object containing the configuration parameters
+	* @param {object[]} config.srcs - Array containing one or more SRC handler configuration objects
+	* @param {string} config.srcs[].name - The name for the SRC handler instance
+	* @param {string} config.srcs[].channels - The channels to SRC; default: "None" | "Ch_0_15" | "Ch_16_31" | "Ch_32_47" | "Ch_48_63" | "Ch_64_79"
+	*/
+	this.audio_src_setup = async function (config) {
+		this.verbose("Running audio_src_setup()...", 76);
+		if(!this.READY) { await this.basics(config);	}
+		if (typeof config === "undefined") {
+			this.verbose("No config entered for audio_src_setup");
+			return -1;
+		}
+		if (config.hasOwnProperty("audio_src_config")) { config = config.audio_src_config; }
+
+		let promises = [...Array(config.srcs.length).keys()].map(async i => {
+			await vscript.dispatch_change_request("audio_src_handler", "create_src", "Click", { ip: this.ip });
+			await vscript.pause_ms(250);
+			await this.write("audio_src_handler.pool[" + i + "]", "id_command", config.srcs[i].name, { ip: this.ip });
+			await this.write("audio_src_handler.pool[" + i + "].settings", "src", config.src[i].channels, { ip: this.ip });
+		});
+		await Promise.all(promises);
+
+		this.verbose("Finished audio_src_setup()...", 80);
 		return 1;
 	},
 
