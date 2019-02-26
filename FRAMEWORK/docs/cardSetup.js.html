@@ -1,7 +1,35 @@
-/* jshint esversion: 6 */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: cardSetup.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: cardSetup.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/* jshint esversion: 6 */
 /**
 * @fileOverview Functions for simplifying setup of a C100
-* @author <a href="mailto:henrik.halvorsen@lawo.com">Henrik Halvorsen</a>
+* @author &lt;a href="mailto:henrik.halvorsen@lawo.com">Henrik Halvorsen&lt;/a>
 * @version 1.2
 */
 
@@ -128,7 +156,7 @@ module.exports = function () {
 			if (comparison == 0) {
 				comparison = version_1[1] - version_2[1]; 
 			} 
-			if (comparison == 0 && check_build) {
+			if (comparison == 0 &amp;&amp; check_build) {
 				comparison = version_1[2] - version_2[2];
 			}
 		}
@@ -143,7 +171,7 @@ module.exports = function () {
 	 */
 	this.running_is_newer_than = async function(version_1, check_build = false) {
 		let r = await this.compare_versions(version_1, this.version, check_build);
-		let n = r < 0 ? true : false;
+		let n = r &lt; 0 ? true : false;
 		return n;
 	},
 
@@ -155,7 +183,7 @@ module.exports = function () {
 	 */
 	this.running_is_newer_than_or_same_as = async function(version_1, check_build = false) {
 		let r = await this.compare_versions(version_1, this.version, check_build);
-		let n = r <= 0 ? true : false;
+		let n = r &lt;= 0 ? true : false;
 		return n;
 	},
 
@@ -171,7 +199,7 @@ module.exports = function () {
 			if (typeof config[kw] !== "object") {
 				flat_config[root + "." + kw] = config[kw];
 			} else if (Array.isArray(config[kw])) {
-				for (let i = 0; i < config[kw].length; i++) {
+				for (let i = 0; i &lt; config[kw].length; i++) {
 					flat_config = Object.assign(flat_config, this.flatten_config(config[kw][i], root + "." + kw + "[" + i + "]"));
 				}
 			} else {
@@ -244,7 +272,7 @@ module.exports = function () {
 		await this.multiviewer_setup(user_config.multiviewer_config);
 		await this.routing(user_config.routing_config);
 
-		if (user_config.hasOwnProperty("reboot") && user_config.reboot === true) {
+		if (user_config.hasOwnProperty("reboot") &amp;&amp; user_config.reboot === true) {
 			this.verbose("Configuration finished, rebooting to publish Ember+", 95);
 			await vscript.reboot({ timeout: 120, ip: this.ip });
 		}
@@ -313,19 +341,19 @@ module.exports = function () {
 
 		let numInterfaces;
 		// Set the number of interfaces to configure based on 40GbE/10GbE
-		if (!(config.hasOwnProperty("mode") && config.hasOwnProperty("addresses") && config.hasOwnProperty("prefixes"))) { return -1; }
+		if (!(config.hasOwnProperty("mode") &amp;&amp; config.hasOwnProperty("addresses") &amp;&amp; config.hasOwnProperty("prefixes"))) { return -1; }
 
 		// Part changed in proposal*********
-		if (config.mode === "40gbe" && config.addresses.length === 2 && config.prefixes.length === 2) {
+		if (config.mode === "40gbe" &amp;&amp; config.addresses.length === 2 &amp;&amp; config.prefixes.length === 2) {
 			numInterfaces = 2;
-		} else if (config.mode === "10gbe" && config.addresses.length === 8 && config.prefixes.length === 8) {
+		} else if (config.mode === "10gbe" &amp;&amp; config.addresses.length === 8 &amp;&amp; config.prefixes.length === 8) {
 			numInterfaces = 8;
 		} else {
 			return -1;
 		}
 
 		// For each interface, set the IP and prefix, then save
-		for (let i = 0; i < numInterfaces; i++) {
+		for (let i = 0; i &lt; numInterfaces; i++) {
 			await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i], { ip: this.ip });
 			await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[i]), { ip: this.ip });
 			await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", { ip: this.ip} );
@@ -426,7 +454,7 @@ module.exports = function () {
 		let promises = [...Array(numInterfaces).keys()].map(async i => {
 			let brief_if = await vscript.read("network_interfaces.ports[" + i + "]", "brief", { ip: this.ip} );
 
-			if (brief_if === "Management Port (back)" && config.port === "rear") {
+			if (brief_if === "Management Port (back)" &amp;&amp; config.port === "rear") {
 				await this.write("network_interfaces.ports[" + i + "].desired_syslog_configuration.syslog_servers[0]", "protocol", config.protocol, { ip: this.ip });
 				await this.write("network_interfaces.ports[" + i + "].desired_syslog_configuration.syslog_servers[0]", "address", config.syslog_server, { ip: this.ip });
 				await this.write("network_interfaces.ports[3].desired_syslog_configuration.syslog_servers[0]", "rebind_interval", config.rebind_interval, { ip: this.ip });
@@ -435,7 +463,7 @@ module.exports = function () {
 				await vscript.dispatch_change_request("network_interfaces", "save_syslog_config", "Click", { ip: this.ip} );
 				await vscript.pause_ms(500);
 			}
-			if (brief_if === "Management Port (front)" && config.port === "front") {
+			if (brief_if === "Management Port (front)" &amp;&amp; config.port === "front") {
 				await this.write("network_interfaces.ports[" + i + "].desired_syslog_configuration.syslog_servers[0]", "protocol", config.protocol, { ip: this.ip });
 				await this.write("network_interfaces.ports[" + i + "].desired_syslog_configuration.syslog_servers[0]", "address", config.syslog_server, { ip: this.ip });
 				await this.write("network_interfaces.ports[3].desired_syslog_configuration.syslog_servers[0]", "rebind_interval", config.rebind_interval, { ip: this.ip });
@@ -469,7 +497,7 @@ module.exports = function () {
 
 		if (config.hasOwnProperty("crossbar_config")) { config = config.crossbar_config; }
 		
-		for (let i = 0; i < config.crossbars.length; i++) {
+		for (let i = 0; i &lt; config.crossbars.length; i++) {
 			let c = i;
 			let xbar = config.crossbars[i].xbar_type;
 			if (!["video", "audio", "a_v", "large"].includes(xbar)) { return -1; }
@@ -511,7 +539,7 @@ module.exports = function () {
 			this.debug("No SDI IO on this card!");
 			return -1;
 		}
-		// for (let i = 0; i < Math.min(config.sdi.length, num_outs); i++) {
+		// for (let i = 0; i &lt; Math.min(config.sdi.length, num_outs); i++) {
 		let promises = [...Array(Math.min(config.sdi.length, num_outs)).keys()].map(async i => {
 			await this.write("i_o_module.output[" + config.sdi[i].index + "].sdi.constraint", "standard_command", config.sdi[i].standard, { ip: this.ip });
 
@@ -551,7 +579,7 @@ module.exports = function () {
 		if (config.hasOwnProperty("video_transmitter_config")) { config = config.video_transmitter_config; }
 		
 		let is_1_8 = await this.running_is_newer_than_or_same_as([1,8,0]);
-		for (let i = 0; i < config.transmitters.length; i++) {
+		for (let i = 0; i &lt; config.transmitters.length; i++) {
 			await this.write("video_transmitter.transmitter_assignment", "interface_command", "network_interfaces.ports[" + config.transmitters[i].pri_port + "].virtual_interfaces[0]", { ip: this.ip });
 			await vscript.dispatch_change_request("video_transmitter.transmitter_assignment", "create_transmitter", "Click", { ip: this.ip} );
 		}
@@ -564,7 +592,7 @@ module.exports = function () {
 			await vscript.pause_ms(250);
 
 			// Set the audio group controls (Embed, Bypass, Off)
-			for (let j = 0; j < 4; j++) {
+			for (let j = 0; j &lt; 4; j++) {
 				await this.write("video_transmitter.pool[" + p + "].audio_control.group_enable[" + j + "]", "group_command", config.transmitters[i].audio, { ip: this.ip });
 			}
 
@@ -577,7 +605,7 @@ module.exports = function () {
 			if (config.transmitters[i].hasOwnProperty("constr_bandwith")) {
 				await this.write("video_transmitter.pool[" + p + "].constraints", "max_bandwidth_command", config.transmitters[i].constr_bandwith, { ip: this.ip });
 			}
-			if (config.transmitters[i].hasOwnProperty("reserve_uhd") && config.transmitters[i].reserve_uhd === true) {
+			if (config.transmitters[i].hasOwnProperty("reserve_uhd") &amp;&amp; config.transmitters[i].reserve_uhd === true) {
 				await this.write("video_transmitter.pool[" + p + "].constraints", "reserve_uhd_resources_command", true);
 			}
 			//
@@ -692,7 +720,7 @@ module.exports = function () {
 				}
 			}
 
-			for (let i = 0; i < config.receivers.length; i++) {
+			for (let i = 0; i &lt; config.receivers.length; i++) {
 				let s = await this.create_new_row("r_t_p_receiver.sessions");
 				await this.write("r_t_p_receiver.sessions[" + s + "].interfaces", "primary_command", "network_interfaces.ports[" + config.receivers[i].pri_port + "].virtual_interfaces[0]", { ip: this.ip });
 				if (config.receivers[i].hasOwnProperty("sec_port")) {
@@ -701,11 +729,11 @@ module.exports = function () {
 				await this.write("r_t_p_receiver.sessions[" + s + "]", "switch_time_command", config.receivers[i].switch_time, { ip: this.ip });
 				await this.write("r_t_p_receiver.sessions[" + s + "]", "switch_type_command", "DTS_" + config.receivers[i].switch_type, { ip: this.ip });
 
-				for (let j = 0; j < config.receivers[i].num_video; j++) {
+				for (let j = 0; j &lt; config.receivers[i].num_video; j++) {
 					let v = await this.create_new_row("r_t_p_receiver.video_receivers");
 					await this.write("r_t_p_receiver.video_receivers[" + v + "].generic", "hosting_session_command", "r_t_p_receiver.sessions[" + s + "]", { ip: this.ip });
 				}
-				for (let j = 0; j < config.receivers[i].num_audio; j++) {
+				for (let j = 0; j &lt; config.receivers[i].num_audio; j++) {
 					let a = await this.create_new_row("r_t_p_receiver.audio_receivers");
 					await this.write("r_t_p_receiver.audio_receivers[" + a + "].generic", "hosting_session_command", "r_t_p_receiver.sessions[" + s + "]", { ip: this.ip });
 				}
@@ -721,13 +749,13 @@ module.exports = function () {
 					await this.write(v + ".generic.timing", "read_delay_preference", "AsEarlyAsPossible", { ip: this.ip });
 					await this.write(v + ".generic.timing", "phase_reference_command", "TimeSource", { ip: this.ip });
 					await this.write(v + ".generic.timing", "time_source_command", "genlock.output", { ip: this.ip });
-					if (config.receivers[i].hasOwnProperty("uhd_singlelink") && config.receivers[i].uhd_singlelink === true) {
+					if (config.receivers[i].hasOwnProperty("uhd_singlelink") &amp;&amp; config.receivers[i].uhd_singlelink === true) {
 						await this.write(v + ".video_specific.capabilities", "supports_uhd_2110_singlelink_command", true);
 					}
-					if (config.receivers[i].hasOwnProperty("uhd_2si") && config.receivers[i].uhd_2si === true) {
+					if (config.receivers[i].hasOwnProperty("uhd_2si") &amp;&amp; config.receivers[i].uhd_2si === true) {
 						await this.write(v + ".video_specific.capabilities", "supports_uhd_sample_interleaved_command", true);
 					}
-					if (config.receivers[i].hasOwnProperty("vc2") && config.receivers[i].vc2 === true) {
+					if (config.receivers[i].hasOwnProperty("vc2") &amp;&amp; config.receivers[i].vc2 === true) {
 						await this.write(v + ".video_specific.capabilities", "supports_st_2042_command", true);
 					}
 				});
@@ -739,7 +767,7 @@ module.exports = function () {
 
 		// For versions prior to 1.8
 		else {
-			for (let i = 0; i < config.receivers.length; i++) {
+			for (let i = 0; i &lt; config.receivers.length; i++) {
 				await vscript.dispatch_change_request("r_t_p_receiver", "create_session", "Click", { ip: this.ip} );
 				await vscript.pause_ms(250);
 				await this.write("r_t_p_receiver.sessions[" + i + "]", "num_video_receivers_command", config.receivers[i].num_video, { ip: this.ip });
@@ -751,7 +779,7 @@ module.exports = function () {
 			}
 
 			let promises = [...Array(config.receivers.length).keys()].map(async i => {
-				// for (let i = 0; i < config.receivers.length; i++) {
+				// for (let i = 0; i &lt; config.receivers.length; i++) {
 				let s = i;
 
 				let sub_promises = [...Array(config.receivers[i].num_audio).keys()].map(async j => {
@@ -798,7 +826,7 @@ module.exports = function () {
 		if (config.hasOwnProperty("video_delay_config")) { config = config.video_delay_config; }
 		
 		// let alloc = await vscript.allocated_indices("delay_handler.video.pool", this.ip)
-		// while (alloc.length < config.delays.length) {
+		// while (alloc.length &lt; config.delays.length) {
 		// alloc = await vscript.allocated_indices("delay_handler.video.pool", this.ip)
 		// }
 
@@ -848,7 +876,7 @@ module.exports = function () {
 		if (config.hasOwnProperty("audio_delay_config")) { config = config.audio_delay_config; }
 		
 		let alloc = await vscript.allocated_indices("delay_handler.audio.pool", { ip: this.ip} );
-		while (alloc.length < config.delays.length) {
+		while (alloc.length &lt; config.delays.length) {
 			await vscript.dispatch_change_request("delay_handler.audio", "create_delay", "Click", { ip: this.ip} );
 			await vscript.pause_ms(250);
 			alloc = await vscript.allocated_indices("delay_handler.audio.pool", { ip: this.ip} );
@@ -889,7 +917,7 @@ module.exports = function () {
 		let num_outs = (await vscript.allocated_indices("i_o_module.output", this.ip)).length;
 		// for (let r of config.routes) {
 		let promises = config.routes.map(async r => {
-			if (r.hasOwnProperty("source") && r.hasOwnProperty("target")) {
+			if (r.hasOwnProperty("source") &amp;&amp; r.hasOwnProperty("target")) {
 				let c;
 				let kwl = r.target.split(".");
 				if (["i_o_module"].includes(kwl[0])) {
@@ -1514,7 +1542,7 @@ module.exports = function () {
 			}
 
 			if (h.hasOwnProperty("pips")) {
-				if (h.pips.length < 1) {
+				if (h.pips.length &lt; 1) {
 					this.verbose("No PIPs defined in config.pips!");
 				} else {
 					for (let pip of h.pips) {
@@ -1533,7 +1561,7 @@ module.exports = function () {
 			}
 
 			if (h.hasOwnProperty("ppms")) {
-				if (h.ppms.length < 1) {
+				if (h.ppms.length &lt; 1) {
 					this.verbose("No PPMs defined in config.ppms!");
 				} else {
 					for (let ppm of h.ppms) {
@@ -1552,7 +1580,7 @@ module.exports = function () {
 			}
 
 			if (h.hasOwnProperty("analog_clocks")) {
-				if (h.analog_clocks.length < 1) {
+				if (h.analog_clocks.length &lt; 1) {
 					this.verbose("No clocks defined in config.analog_clocks!");
 				} else {
 					for (let clock of h.analog_clocks) {
@@ -1571,7 +1599,7 @@ module.exports = function () {
 			}
 
 			if (h.hasOwnProperty("digital_clocks")) {
-				if (h.digital_clocks.length < 1) {
+				if (h.digital_clocks.length &lt; 1) {
 					this.verbose("No clocks defined in config.digital_clocks!");
 				} else {
 					for (let clock of h.digital_clocks) {
@@ -1590,7 +1618,7 @@ module.exports = function () {
 			}
 
 			if (h.hasOwnProperty("text_boxes")) {
-				if (h.text_boxes.length < 1) {
+				if (h.text_boxes.length &lt; 1) {
 					this.verbose("No boxes defined in config.text_boxes!");
 				} else {
 					for (let box of h.text_boxes) {
@@ -1615,3 +1643,26 @@ module.exports = function () {
 
 	return this;
 };
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-cardSetup.html">cardSetup</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Feb 26 2019 10:30:47 GMT+0100 (W. Europe Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
