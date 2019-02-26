@@ -1,1 +1,0 @@
-"use strict";function is_subtree_description(e){return"subtree"===e.data_type}function is_atomic_subtree_description(e){return"atomic subtree"===e.data_type}Object.defineProperty(exports,"__esModule",{value:!0}),exports.is_subtree_description=is_subtree_description,exports.is_atomic_subtree_description=is_atomic_subtree_description;
