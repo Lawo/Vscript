@@ -10,7 +10,6 @@
 * @desc Module containing all functions for complete C100 setup
 */
 //TODO: add audio channel count to crossbar_setup
-//TODO: add audio srcs
 //TODO: add function for other commands
 //TODO: function for setting static SDP
 
@@ -80,7 +79,6 @@ module.exports = function () {
 		} else {
 			vscript.inform(this.getTimeStamp() + " VERBOSE (" + this.ip + "): " + verbose_string);		
 			vscript.dispatch_change_request("system.usrinfo", "cur_status", verbose_string, { ip: this.ip });
-
 		}
 	},
 
@@ -244,6 +242,7 @@ module.exports = function () {
 		await this.video_delay_setup(user_config.video_delay_config);
 		await this.audio_delay_setup(user_config.audio_delay_config);
 		await this.multiviewer_setup(user_config.multiviewer_config);
+		await this.web_routing(user_config.web_routing_config);
 		await this.routing(user_config.routing_config);
 
 		if (user_config.hasOwnProperty("reboot") && user_config.reboot === true) {
@@ -259,6 +258,7 @@ module.exports = function () {
 
 		await this.write("system.usrinfo", "towel", "", { ip: this.ip });
 		await this.write("system.usrinfo", "cur_status", "", { ip: this.ip });
+		this.status.finished = true;
 
 		return 1;
 	},
@@ -319,12 +319,12 @@ module.exports = function () {
 
 		let numInterfaces;
 		// Set the number of interfaces to configure based on 40GbE/10GbE
-		if (!(config.hasOwnProperty("mode") && config.hasOwnProperty("addresses") && config.hasOwnProperty("prefixes"))) { return -1; }
+		if (!(config.hasOwnProperty("mode") && config.hasOwnProperty("addresses"))) { return -1; }
 
 		// Part changed in proposal*********
-		if (config.mode === "40gbe" && config.addresses.length === 2 && config.prefixes.length === 2) {
+		if (config.mode === "40gbe" && config.addresses.length === 2) {
 			numInterfaces = 2;
-		} else if (config.mode === "10gbe" && config.addresses.length === 8 && config.prefixes.length === 8) {
+		} else if (config.mode === "10gbe" && config.addresses.length === 8) {
 			numInterfaces = 8;
 		} else {
 			return -1;
@@ -332,8 +332,13 @@ module.exports = function () {
 
 		// For each interface, set the IP and prefix, then save
 		for (let i = 0; i < numInterfaces; i++) {
-			await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i], { ip: this.ip });
-			await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[i]), { ip: this.ip });
+			if (config.addresses[i].split("/").length > 1) {
+				await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i].split("/")[0], { ip: this.ip });
+				await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.addresses[i].split("/")[1]), { ip: this.ip });
+			} else {
+				await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i], { ip: this.ip });
+				await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[i]), { ip: this.ip });
+			}
 			await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", { ip: this.ip} );
 		}
 
@@ -904,6 +909,64 @@ module.exports = function () {
 		this.verbose("Finished audio_src_setup()...", 80);
 		return 1;
 	},
+
+	this.routing_commands = {
+		video: {
+			source: {
+				rtp_receiver: 		{ kwl: "r_t_p_receiver.sessions[{0}].video_receivers[{1}]", kw: "wrapped_reference", addon: ".video_specific.output.video"},
+				a_v_crossbar: 		{ kwl: "a_v_crossbar.pool[{0}].outputs[{1}].output.video"},
+				video_crossbar: 	{ kwl: "video_crossbar.pool[{0}].outputs[{1}].output"},
+				io_module: 			{ kwl: "i_o_module.input[{1}].sdi.output.video"}
+			},
+			target: {
+				video_transmitter: 	{ kwl: "video_transmitter.pool[{0}].vid_source", command: "v_src_command"},
+				io_module: 			{ kwl: "i_o_module.output[{0}].sdi.vid_src", command: "v_src_command"},
+				a_v_crossbar: 		{ kwl: "a_v_crossbar.pool[{0}].inputs[{1}].source", command: "video_command"},
+				video_crossbar: 	{ kwl: "video_crossbar.pool[{0}].inputs[{1}]", command: "source_command"},
+			}
+		},
+		audio: {
+			source: {
+				rtp_receiver: 		{ kwl: "r_t_p_receiver.sessions[{0}].audio_receivers[{1}]", kw: "wrapped_reference", addon: ".audio_specific.output"},
+				a_v_crossbar:		{ kwl: "a_v_crossbar.pool[{0}].outputs[{1}].output.audio"},
+				audio_crossbar: 	{ kwl: "audio_crossbar.large[{0}].outputs[{1}].output"},
+				io_module: 			{ kwl: "i_o_module.input[{1}].sdi.output.audio"}
+			},
+			target: {
+				audio_transmitter: 	{ kwl: "audio_transmitter.pool[{0}]", command: "source_command"},
+				io_module: 			{ kwl:"i_o_module.output[{0}].sdi.audio_control", command: "source_command"},
+				a_v_crossbar: 		{ kwl: "a_v_crossbar.pool[{0}].inputs[{1}].source", command: "audio_command"},
+				audio_crossbar: 	{ kwl: "audio_crossbar.large[{0}].inputs[{1}]", command: "source_command"},
+			}
+		}
+	};
+
+	this.web_routing = async function (config) {
+		this.verbose("Running web_routing()...", 81);
+		if(!this.READY) { await this.basics(config);	}
+		if (typeof config === "undefined") {
+			this.verbose("No config entered for web_routing");
+			return 1;
+		}
+		if (config.hasOwnProperty("web_routing_config")) { config = config.web_routing_config; }
+
+		for (let r of config.routes) {
+			let target = this.routing_commands[r.signal_type].target[r.target_type].kwl;
+			target = target.replace("{0}", r.target_idx).replace("{1}", r.target_endpoint_idx);
+			let command = this.routing_commands[r.signal_type].target[r.target_type].command;
+			let source = this.routing_commands[r.signal_type].source[r.source_type].kwl;
+			source = source.replace("{0}", r.source_idx).replace("{1}", r.source_endpoint_idx);
+			if (r.source_type === "rtp_receiver") {	
+				let kw = this.routing_commands[r.signal_type].source[r.source_type].kw;
+				let addon = this.routing_commands[r.signal_type].source[r.source_type].addon;
+				source = await vscript.read(source, kw, { ip: this.ip }) + addon; 
+			}
+			await this.write(target, command, source, { ip: this. ip});
+		}
+		
+		return 1;
+	},
+
 
 	/**
 	* Setup function for routing
