@@ -56,7 +56,10 @@ module.exports = function () {
 	*/
 	this.debug = function (debug_string) {
 		if (this.DEBUG) {
-			if (this.STATUS_FLAG) {
+			if (typeof this.status === "function") {
+				this.status(debug_string);
+			}
+			else if (this.STATUS_FLAG) {
 				this.status[this.ip] = Object.assign(this.status[this.ip], { Time: this.getTimeStamp(), Debug: debug_string });
 			} else {
 				console.log("[" + this.getTimeStamp() + "] DEBUG (" + this.ip + "): " + debug_string);
@@ -71,7 +74,10 @@ module.exports = function () {
 	*/
 	this.verbose = function (verbose_string, progress = -1) {
 		if (this.STATUS_FLAG) {
-			if (progress >= 0) {
+			if (typeof this.status === "function") {
+				this.status(verbose_string);
+			}
+			else if (progress >= 0) {
 				this.status[this.ip] = Object.assign(this.status[this.ip], { Time: this.getTimeStamp(), percentage: progress, Status: verbose_string });
 			} else {
 				this.status[this.ip] = Object.assign(this.status[this.ip], { Time: this.getTimeStamp(), Status: verbose_string });
@@ -200,7 +206,7 @@ module.exports = function () {
 		this.verbose("Attempting to connect to card...", 0);
 		if (!(await vscript.is_reachable(this.ip))) {
 			vscript.warn("Unable to reach " + { ip: this.ip} );
-			return 1;
+			process.exit(-1);
 		}
 		await this.get_version();
 		this.READY = true;
@@ -285,7 +291,7 @@ module.exports = function () {
 		}
 		let curr = await vscript.read("system", "selected_fpga", { ip: this.ip} );
 		if (curr == config.fpga) {
-			this.verbose("Correct FPGA alvscript.ready selected: " + curr);
+			this.verbose("Correct FPGA already selected: " + curr);
 		} else if (["streaming", "multiviewer", "streaming_40gbe", "multiviewer_40gbe"].includes(config.fpga.toLowerCase())) {
 			await vscript.dispatch_change_request("system", "select_fpga_command", config.fpga.toUpperCase().replace("GBE", "GbE"), { ip: this.ip} );
 			await vscript.pause_ms(250);
@@ -819,17 +825,13 @@ module.exports = function () {
 			await this.write("delay_handler.video.pool[" + i + "]", "id_command", config.delays[i].name, { ip: this.ip });
 			await this.write("delay_handler.video.pool[" + i + "]", "num_outputs", 1, { ip: this.ip });
 			await this.write("delay_handler.video.pool[" + i + "].allocate", "frames_command", 0, {
-				retry_until: async () => {
-					return (await vscript.read("delay_handler.video.pool[" + i + "].allocate", "frames_status", this.ip) > 0);
-				},
+				payload_validator: (res) => { return res > 0; },
 				ip: this.ip
 			});
 			await this.write("delay_handler.video.pool[" + i + "].allocate", "standard_command", config.delays[i].standard, { ip: this.ip });
 			await this.write("delay_handler.video.pool[" + i + "].allocate", "delay_mode_command", config.delays[i].mode, { ip: this.ip });
-			await this.write("delay_handler.video.pool[" + i + "].outputs[0].delay", "frames_command", 0, {
-				retry_until: async () => {
-					return (await vscript.read("delay_handler.video.pool[" + i + "].outputs[0].delay", "frames_status", this.ip) > 0);
-				},
+			await this.write("delay_handler.video.pool[" + i + "].outputs[0].delay", "frames_command", 0, {					
+				payload_validator: (res) => { return res > 0; },
 				ip: this.ip
 			});
 		});
@@ -872,9 +874,13 @@ module.exports = function () {
 			await this.write("delay_handler.audio.pool[" + i + "]", "num_outputs", 1, { ip: this.ip });
 			await this.write("delay_handler.audio.pool[" + i + "].allocate", "frequency_command", (config.delays[i].hasOwnProperty("frequency") ? config.delays[i].frequency : "F48000"), { ip: this.ip });
 			await this.write("delay_handler.audio.pool[" + i + "].allocate", "mode_command", "Time", { ip: this.ip });
-			await this.write("delay_handler.audio.pool[" + i + "].allocate", "time_command", (config.delays[i].hasOwnProperty("alloc_time") ? config.delays[i].alloc_time : 1000000000), { ip: this.ip });
+			await this.write("delay_handler.audio.pool[" + i + "].allocate", "time_command", (config.delays[i].hasOwnProperty("alloc_time") ? config.delays[i].alloc_time : 1000000000), { 				
+				payload_validator: (res) => { return res > 0; },
+				ip: this.ip });
 			await this.write("delay_handler.audio.pool[" + i + "].outputs[0].delay", "mode_command", "Time", { ip: this.ip });
-			await this.write("delay_handler.audio.pool[" + i + "].outputs[0].delay", "time_command", (config.delays[i].hasOwnProperty("delay_time") ? config.delays[i].delay_time : 1000000), { ip: this.ip });
+			await this.write("delay_handler.audio.pool[" + i + "].outputs[0].delay", "time_command", (config.delays[i].hasOwnProperty("delay_time") ? config.delays[i].delay_time : 1000000), { 				
+				payload_validator: (res) => { return res > 0; },
+				ip: this.ip });
 		});
 		await Promise.all(promises);
 
@@ -916,13 +922,15 @@ module.exports = function () {
 				rtp_receiver: 		{ kwl: "r_t_p_receiver.sessions[{0}].video_receivers[{1}]", kw: "wrapped_reference", addon: ".video_specific.output.video"},
 				a_v_crossbar: 		{ kwl: "a_v_crossbar.pool[{0}].outputs[{1}].output.video"},
 				video_crossbar: 	{ kwl: "video_crossbar.pool[{0}].outputs[{1}].output"},
-				io_module: 			{ kwl: "i_o_module.input[{1}].sdi.output.video"}
+				io_module: 			{ kwl: "i_o_module.input[{1}].sdi.output.video"},
+				video_delay:		{ kwl: "delay_handler.video.pool[{0}].outputs[{1}].output"},
 			},
 			target: {
 				video_transmitter: 	{ kwl: "video_transmitter.pool[{0}].vid_source", command: "v_src_command"},
 				io_module: 			{ kwl: "i_o_module.output[{0}].sdi.vid_src", command: "v_src_command"},
 				a_v_crossbar: 		{ kwl: "a_v_crossbar.pool[{0}].inputs[{1}].source", command: "video_command"},
 				video_crossbar: 	{ kwl: "video_crossbar.pool[{0}].inputs[{1}]", command: "source_command"},
+				video_delay:		{ kwl: "delay_handler.video.pool[{0}].inputs[{1}]", command: "source_command"},
 			}
 		},
 		audio: {
@@ -930,13 +938,16 @@ module.exports = function () {
 				rtp_receiver: 		{ kwl: "r_t_p_receiver.sessions[{0}].audio_receivers[{1}]", kw: "wrapped_reference", addon: ".audio_specific.output"},
 				a_v_crossbar:		{ kwl: "a_v_crossbar.pool[{0}].outputs[{1}].output.audio"},
 				audio_crossbar: 	{ kwl: "audio_crossbar.large[{0}].outputs[{1}].output"},
-				io_module: 			{ kwl: "i_o_module.input[{1}].sdi.output.audio"}
+				io_module: 			{ kwl: "i_o_module.input[{1}].sdi.output.audio"},
+				audio_delay:		{ kwl: "delay_handler.audio.pool[{0}].outputs[{1}].output"},
 			},
 			target: {
+				video_transmitter: 	{ kwl: "video_transmitter.pool[{0}].audio_control", command: "source_command"},
 				audio_transmitter: 	{ kwl: "audio_transmitter.pool[{0}]", command: "source_command"},
 				io_module: 			{ kwl:"i_o_module.output[{0}].sdi.audio_control", command: "source_command"},
 				a_v_crossbar: 		{ kwl: "a_v_crossbar.pool[{0}].inputs[{1}].source", command: "audio_command"},
 				audio_crossbar: 	{ kwl: "audio_crossbar.large[{0}].inputs[{1}]", command: "source_command"},
+				audio_delay:		{ kwl: "delay_handler.audio.pool[{0}].inputs", command: "source_command"},
 			}
 		}
 	};
