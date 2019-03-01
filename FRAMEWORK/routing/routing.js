@@ -152,15 +152,19 @@ let _addEndpoints = function (toId, sourceAnchors, targetAnchors, params) {
 };
 
 let _createBlock = function (blockType) {
-	if (blockProto[blockType].max_instances <= blockProto[blockType].index) { return; }
+	console.log("Createblock called");
+	let idx = blockProto[blockType].instances.findIndex(e => { return (e === null || typeof e === "undefined"); });
+	if (idx === -1) { idx = blockProto[blockType].instances.length; }
+	if (blockProto[blockType].max_instances <= blockProto[blockType].instances.filter(function(value) { return value !== null; }).length) { return; }
+	console.log("Createblock executing");
 
 	let newBlock = document.createElement("div");
 	newBlock.classList = "jtk-node " + blockProto[blockType].class;
-	newBlock.id = blockProto[blockType].identifier + "_" + blockProto[blockType].index;
+	newBlock.id = blockProto[blockType].identifier + "_" + idx;
 
 	let nameDiv = document.createElement("div");
-	nameDiv.classList.add("block-name");
-	nameDiv.appendChild(document.createTextNode(blockProto[blockType].description + (blockProto[blockType].max_instances === 1 ? "" : " " + blockProto[blockType].index)));
+	nameDiv.classList.add("name");
+	nameDiv.appendChild(document.createTextNode(blockProto[blockType].description + (blockProto[blockType].max_instances === 1 ? "" : " " + idx)));
 	newBlock.appendChild(nameDiv);
 
 	newBlock.appendChild(document.createElement("p"));
@@ -211,10 +215,11 @@ let _createBlock = function (blockType) {
 	}
 
 	newBlock.appendChild(parameterSection);
-	blockProto[blockType].index++;
+	blockProto[blockType].instances[idx] = newBlock.id;
 	canvas.appendChild(newBlock);
 	_updateEndpoints(newBlock.id, blockType);
 	instance.draggable(jsPlumb.getSelector(".routing ." + blockProto[blockType].class), { grid: [20, 20] });
+	return newBlock;
 };
 
 //Add/remove endpoints
@@ -227,22 +232,22 @@ let _updateEndpoints = function (blockId, blockType) {
 	let overlap = false;
 	let crossbarType;
 	if (blockType === "crossbar") {
-		crossbarType = b.querySelector(".parameter.crossbar-type").getElementsByTagName("select")[0].value;
+		crossbarType = _readParameter(b, "xbar-type");
 		switch (crossbarType) {
 		case "a_v":
 			overlap = true;
-			newIo.video.in = b.querySelector(".parameter.inputs").getElementsByTagName("input")[0].value;
-			newIo.video.out = b.querySelector(".parameter.outputs").getElementsByTagName("input")[0].value;
-			newIo.audio.in = b.querySelector(".parameter.inputs").getElementsByTagName("input")[0].value;
-			newIo.audio.out = b.querySelector(".parameter.outputs").getElementsByTagName("input")[0].value;
+			newIo.video.in = _readParameter(b, "num-in");
+			newIo.video.out = _readParameter(b, "num-out");
+			newIo.audio.in = _readParameter(b, "num-in");
+			newIo.audio.out = _readParameter(b, "num-out");
 			break;
 		case "video":
-			newIo.video.in = b.querySelector(".parameter.inputs").getElementsByTagName("input")[0].value;
-			newIo.video.out = b.querySelector(".parameter.outputs").getElementsByTagName("input")[0].value;
+			newIo.video.in = _readParameter(b, "num-in");
+			newIo.video.out = _readParameter(b, "num-out");
 			break;
 		case "large":
-			newIo.audio.in = b.querySelector(".parameter.inputs").getElementsByTagName("input")[0].value;
-			newIo.audio.out = b.querySelector(".parameter.outputs").getElementsByTagName("input")[0].value;
+			newIo.audio.in = _readParameter(b, "num-in");
+			newIo.audio.out = _readParameter(b, "num-out");
 			break;
 		default:
 			break;
@@ -250,19 +255,19 @@ let _updateEndpoints = function (blockId, blockType) {
 	} 
 	else if (blockType === "io_module") {
 		overlap = true;
-		let moduleType = b.querySelector(".parameter.io-module-type").getElementsByTagName("select")[0].value;
+		let moduleType = _readParameter(b, "io-module-type");
 		switch (moduleType) {
 		case "2/2/16":
-			b.querySelector(".parameter.outputs").getElementsByTagName("input")[0].disabled = false;
-			b.querySelector(".parameter.inputs").getElementsByTagName("input")[0].disabled = false;
-			newIo.video.in = b.querySelector(".parameter.outputs").getElementsByTagName("input")[0].value;
-			newIo.audio.in = b.querySelector(".parameter.outputs").getElementsByTagName("input")[0].value;
-			newIo.video.out = b.querySelector(".parameter.inputs").getElementsByTagName("input")[0].value;
-			newIo.audio.out = b.querySelector(".parameter.inputs").getElementsByTagName("input")[0].value;
+			_disableParameter(b, "outputs", false);
+			_disableParameter(b, "inputs", false);
+			newIo.video.in = _readParameter(b, "outputs");
+			newIo.audio.in = _readParameter(b, "outputs");
+			newIo.video.out = _readParameter(b, "inputs");
+			newIo.audio.out = _readParameter(b, "inputs");
 			break;
 		default:
-			b.querySelector(".parameter.outputs").getElementsByTagName("input")[0].disabled = true;
-			b.querySelector(".parameter.inputs").getElementsByTagName("input")[0].disabled = true;
+			_disableParameter(b, "outputs", true);
+			_disableParameter(b, "inputs", true);
 			newIo.video.in = moduleType.split("/")[0];
 			newIo.audio.in = moduleType.split("/")[0];
 			newIo.video.out = moduleType.split("/")[1];
@@ -271,12 +276,12 @@ let _updateEndpoints = function (blockId, blockType) {
 		}
 	}
 	else if (blockType === "rtp_receiver") {
-		newIo.video.out = b.querySelector(".parameter.video-receivers").getElementsByTagName("input")[0].value;
-		newIo.audio.out = b.querySelector(".parameter.audio-receivers").getElementsByTagName("input")[0].value;
+		newIo.video.out = _readParameter(b, "num-video");
+		newIo.audio.out = _readParameter(b, "num-audio");
 	}
 	else if (blockType === "video_transmitter") {
 		newIo = JSON.parse(JSON.stringify(blockProto[blockType].fixed_endpoints));
-		if (b.querySelector(".parameter.format").getElementsByTagName("select")[0].value === "ST2022_6") {
+		if (_readParameter(b, "format") === "ST2022_6") {
 			newIo.audio.in = 1;
 		}
 	}
@@ -393,7 +398,7 @@ let _expandBlock = function (blockId) {
 	let p = document.getElementById(blockId).querySelector(".parameter-section");
 	if (p.hidden) {
 		document.getElementById(blockId).classList.add("expanded"); 
-		let n = document.getElementById(blockId).querySelector(".block-name");
+		let n = document.getElementById(blockId).querySelector(".name");
 		let inputField = document.createElement("input");
 		inputField.type = "text";
 		inputField.value = n.textContent;
@@ -402,8 +407,8 @@ let _expandBlock = function (blockId) {
 	}
 	else { 
 		document.getElementById(blockId).classList.remove("expanded"); 
-		let n = document.getElementById(blockId).querySelector(".block-name").getElementsByTagName("input")[0];
-		document.getElementById(blockId).querySelector(".block-name").appendChild(document.createTextNode(n.value));
+		let n = document.getElementById(blockId).querySelector(".name").getElementsByTagName("input")[0];
+		document.getElementById(blockId).querySelector(".name").appendChild(document.createTextNode(n.value));
 		n.remove();
 	}
 	p.hidden = !p.hidden;
@@ -413,7 +418,7 @@ let _expandBlock = function (blockId) {
 let _deleteBlock = function(blockId) {
 	let b = document.getElementById(blockId);
 	let blockType = b.id.split("_").slice(0,-1).join("_");
-	blockProto[blockType].index--;
+	blockProto[blockType].instances[blockProto[blockType].instances.indexOf(blockId)] = null;
 	instance.removeAllEndpoints(b.id);
 	instance.remove(b.id);
 	instance.revalidate(b.id);
@@ -421,156 +426,98 @@ let _deleteBlock = function(blockId) {
 };
 
 let _generateJSON = function() {
-	let elements = canvas.getElementsByClassName("jtk-node");
-	let obj = {
+	//let elements = canvas.getElementsByClassName("jtk-node");
+	let config = {
 		system_config: {
-			reset: true, 
 		},
 	};
-	for (let el of elements) {
-		if (!el.querySelector(".parameter-section").hidden) {
-			_expandBlock(el.id);
-		}
-		if (el.classList.contains("system")) {
-			obj.ip = el.querySelector(".parameter.access-ip").getElementsByTagName("input")[0].value;
-			obj.system_config = obj.system_config || {};
-			obj.network_config = obj.network_config || {};
-			obj.system_config.fpga = el.querySelector(".parameter.fpga").getElementsByTagName("select")[0].value;
-			obj.network_config.mode = (obj.system_config.fpga.endsWith("40GbE") ? "40gbe" : "10gbe");
-			obj.network_config.front_mgmt = el.querySelector(".parameter.front-mgmt").getElementsByTagName("input")[0].value;
-			obj.network_config.rear_mgmt = el.querySelector(".parameter.rear-mgmt").getElementsByTagName("input")[0].value;
-			obj.network_config.addresses = [];
-			for (let ip of el.querySelector(".parameter.left-qsfp").getElementsByTagName("input")[0].value.split(",")) {
-				ip = ip.replace(/\s/g, "");
-				obj.network_config.addresses.push(ip);
-				if (obj.network_config.mode === "40gbe") { break; }
+	for (let blockType in blockProto) {
+		for (let instance of blockProto[blockType].instances) {
+			if (instance == null) { continue; }
+			let el = document.getElementById(instance);
+			if (!el.querySelector(".parameter-section").hidden) {
+				_expandBlock(el.id);
 			}
-			for (let ip of el.querySelector(".parameter.right-qsfp").getElementsByTagName("input")[0].value.split(",")) {
-				ip = ip.replace(/\s/g, "");
-				obj.network_config.addresses.push(ip);
-				if (obj.network_config.mode === "40gbe") { break; }
+			let obj = {};
+			obj.name = _readParameter(el, "name");
+			for (let p of blockProto[blockType].parameters) {
+				obj[p.id] = _readParameter(el, p.id);
 			}
-		}
-		else if (el.classList.contains("ptp")) {
-			obj.ptp_config = obj.ptp_config || {};
-			obj.ptp_config.domain = parseInt(el.querySelector(".parameter.ptp-domain").getElementsByTagName("input")[0].value);
-			obj.ptp_config.port = el.querySelector(".parameter.primary-port").getElementsByTagName("select")[0].value;
-			obj.ptp_config.sec_port = el.querySelector(".parameter.secondary-port").getElementsByTagName("select")[0].value;
-			if (obj.ptp_config.sec_port === "null") { delete obj.ptp_config.sec_port; }
-			obj.ptp_config.delay_req = el.querySelector(".parameter.delay-request").getElementsByTagName("select")[0].value;
-			obj.ptp_config.utc = el.querySelector(".parameter.utc-offset").getElementsByTagName("select")[0].value;
-		}
-		else if (el.classList.contains("crossbar")) {
-			obj.crossbar_config = obj.crossbar_config || { crossbars: [] };
-			let cb = {
-				name: el.querySelector(".block-name").textContent,
-				xbar_type: el.querySelector(".parameter.crossbar-type").getElementsByTagName("select")[0].value,
-				num_in: parseInt(el.querySelector(".parameter.inputs").getElementsByTagName("input")[0].value),
-				num_out: parseInt(el.querySelector(".parameter.outputs").getElementsByTagName("input")[0].value),
-			};
-			obj.crossbar_config.crossbars.push(cb);
-		}
-		else if (el.classList.contains("rtp-receiver")) {
-			obj.rtp_receiver_config = obj.rtp_receiver_config || { receivers: [] };
-			let rec = {
-				name: el.querySelector(".block-name").textContent,
-				pri_port: el.querySelector(".parameter.primary-port").getElementsByTagName("select")[0].value,
-				sec_port: el.querySelector(".parameter.secondary-port").getElementsByTagName("select")[0].value,
-				num_video: parseInt(el.querySelector(".parameter.video-receivers").getElementsByTagName("input")[0].value),
-				num_audio: parseInt(el.querySelector(".parameter.audio-receivers").getElementsByTagName("input")[0].value),
-				vc2: el.querySelector(".parameter.st2042").getElementsByTagName("input")[0].checked,
-				uhd_singlelink: el.querySelector(".parameter.st2110-singlelink").getElementsByTagName("input")[0].checked,
-				uhd_2si: el.querySelector(".parameter.uhd-sample-interleaved").getElementsByTagName("input")[0].checked,
-				switch_type: "BBM",
-				switch_time: 1,
-				audio_ch: 16
-			};
-			if (rec.sec_port === "null") { delete rec.sec_port; }
-			obj.rtp_receiver_config.receivers.push(rec);
-		}
-		else if (el.classList.contains("video-transmitter")) {
-			obj.video_transmitter_config = obj.video_transmitter_config || { transmitters: [] };
-			let tx = {
-				name: el.querySelector(".block-name").textContent,
-				pri_port: el.querySelector(".parameter.primary-port").getElementsByTagName("select")[0].value,
-				sec_port: el.querySelector(".parameter.secondary-port").getElementsByTagName("select")[0].value,
-				pri_mc: el.querySelector(".parameter.primary-mc").getElementsByTagName("input")[0].value,
-				sec_mc: el.querySelector(".parameter.secondary-mc").getElementsByTagName("input")[0].value,
-				reserve_uhd: el.querySelector(".parameter.reserve-uhd").getElementsByTagName("input")[0].checked,
-				format: el.querySelector(".parameter.format").getElementsByTagName("select")[0].value,
-				constr_format: el.querySelector(".parameter.constraint-format").getElementsByTagName("select")[0].value,
-				constr_bandwidth: el.querySelector(".parameter.constraint-bandwidth").getElementsByTagName("select")[0].value,
-				payload: parseInt(el.querySelector(".parameter.payload").getElementsByTagName("input")[0].value),
-				audio: el.querySelector(".parameter.audio").getElementsByTagName("select")[0].value,
-			};
-			if (tx.sec_port === "null") { delete tx.sec_port; }
-			if (tx.constr_format === "null") { delete tx.constr_format; }
-			obj.video_transmitter_config.transmitters.push(tx);
-		}
-		else if (el.classList.contains("audio-transmitter")) {
-			obj.audio_transmitter_config = obj.audio_transmitter_config || { transmitters: [] };
-			let tx = {
-				name: el.querySelector(".block-name").textContent,
-				pri_port: el.querySelector(".parameter.primary-port").getElementsByTagName("select")[0].value,
-				sec_port: el.querySelector(".parameter.secondary-port").getElementsByTagName("select")[0].value,
-				pri_mc: el.querySelector(".parameter.primary-mc").getElementsByTagName("input")[0].value,
-				sec_mc: el.querySelector(".parameter.secondary-mc").getElementsByTagName("input")[0].value,
-				format: el.querySelector(".parameter.format").getElementsByTagName("select")[0].value,
-				packet_time: el.querySelector(".parameter.packet-time").getElementsByTagName("select")[0].value,
-				payload: parseInt(el.querySelector(".parameter.payload").getElementsByTagName("input")[0].value),
-				num_channels: parseInt(el.querySelector(".parameter.audio-channels").getElementsByTagName("input")[0].value),
-			};
-			if (tx.sec_port === "null") { delete tx.sec_port; }
-			obj.audio_transmitter_config.transmitters.push(tx);
-		}
-		else if (el.classList.contains("video-delay")) {
-			obj.video_delay_config = obj.video_delay_config || { delays: [] };
-			let dly = {
-				name: el.querySelector(".block-name").textContent,
-				mode: el.querySelector(".parameter.mode").getElementsByTagName("select")[0].value,
-				standard: el.querySelector(".parameter.standard").getElementsByTagName("select")[0].value,
-			};
-			obj.video_delay_config.delays.push(dly);
-		}
-		else if (el.classList.contains("audio-delay")) {
-			obj.audio_delay_config = obj.audio_delay_config || { delays: [] };
-			let dly = {
-				name: el.querySelector(".block-name").textContent,
-				frequency: el.querySelector(".parameter.frequency").getElementsByTagName("select")[0].value,
-				num_channels: parseInt(el.querySelector(".parameter.audio-channels").getElementsByTagName("input")[0].value),
-				alloc_time: parseInt(parseFloat(el.querySelector(".parameter.allocated-time").getElementsByTagName("input")[0].value)*1000000),
-				delay_time: parseInt(parseFloat(el.querySelector(".parameter.delay-time").getElementsByTagName("input")[0].value)*1000000),
-			};
-			obj.audio_delay_config.delays.push(dly);
-		}
-		else if (el.classList.contains("io-module")) {
-			obj.sdi_config = obj.sdi_config || { sdi: [] };
-			let num_outs;
-			switch (el.querySelector(".parameter.io-module-type").getElementsByTagName("select")[0].value) {
-			case "2/2/16":
-				num_outs = el.querySelector(".parameter.outputs").getElementsByTagName("input")[0].value;
-				break;
-			default:
-				num_outs = el.querySelector(".parameter.io-module-type").getElementsByTagName("select")[0].value.split("/")[1];
-				break;
+			if (el.classList.contains("system")) {
+				config.ip = _readParameter(el, "access-ip");
+				config.system_config = config.system_config || {};
+				config.network_config = config.network_config || {};
+				config.system_config.reset = _readParameter(el, "reset");
+				config.system_config.fpga = _readParameter(el, "fpga");
+				config.network_config.mode = (config.system_config.fpga.endsWith("40GbE") ? "40gbe" : "10gbe");
+				if (_readParameter(el, "update-ips")) {
+					config.network_config.front_mgmt = _readParameter(el, "front_mgmt");
+					config.network_config.rear_mgmt = _readParameter(el, "rear_mgmt");
+					config.network_config.addresses = [];
+					for (let ip of _readParameter(el, "left-qsfp").split(",")) {
+						ip = ip.replace(/\s/g, "");
+						config.network_config.addresses.push(ip);
+						if (config.network_config.mode === "40gbe") { break; }
+					}
+					for (let ip of _readParameter(el, "right-qsfp").split(",")) {
+						ip = ip.replace(/\s/g, "");
+						config.network_config.addresses.push(ip);
+						if (config.network_config.mode === "40gbe") { break; }
+					}
+				}
 			}
-			for (let i = 0; i < num_outs; i++) {
-				obj.sdi_config.sdi.push( { index: i, standard: null, audio: el.querySelector(".parameter.embed").getElementsByTagName("select")[0].value} );
+			else if (el.classList.contains("ptp")) {
+				config.ptp_config = config.ptp_config || {};
+				for (let p of blockProto[blockType].parameters) {
+					config.ptp_config[p.id] = _readParameter(el, p.id);
+				}
+			}
+			else if (el.classList.contains("crossbar")) {
+				config.crossbar_config = config.crossbar_config || { crossbars: [] };
+				config.crossbar_config.crossbars.push(obj);
+			}
+			else if (el.classList.contains("rtp-receiver")) {
+				config.rtp_receiver_config = config.rtp_receiver_config || { receivers: [] };
+				if (obj.sec_port === "null") { delete obj.sec_port; }
+				config.rtp_receiver_config.receivers.push(obj);
+			}
+			else if (el.classList.contains("video-transmitter")) {
+				config.video_transmitter_config = config.video_transmitter_config || { transmitters: [] };
+				if (obj.sec_port === "null") { delete obj.sec_port; }
+				if (obj.constr_format === "null") { delete obj.constr_format; }
+				config.video_transmitter_config.transmitters.push(obj);
+			}
+			else if (el.classList.contains("audio-transmitter")) {
+				config.audio_transmitter_config = config.audio_transmitter_config || { transmitters: [] };
+				if (obj.sec_port === "null") { delete obj.sec_port; }
+				config.audio_transmitter_config.transmitters.push(obj);
+			}
+			else if (el.classList.contains("video-delay")) {
+				config.video_delay_config = config.video_delay_config || { delays: [] };
+				config.video_delay_config.delays.push(obj);
+			}
+			else if (el.classList.contains("audio-delay")) {
+				config.audio_delay_config = config.audio_delay_config || { delays: [] };
+				config.audio_delay_config.delays.push(obj);
+			}
+			else if (el.classList.contains("io-module")) {
+				config.sdi_config = config.sdi_config || { sdi: [] };
+				if (_readParameter(el, "io-module-type") !== "2/2/16") {
+					obj.num_outs = _readParameter(el, "io-module-type").split("/")[1];
+				}
+				for (let i = 0; i < obj.num_outs; i++) {
+					config.sdi_config.sdi = ( { index: i, standard: null, audio: _readParameter(el, "audio")} );
+				}
 			}
 		}
 	}
 
-	obj.web_routing_config = obj.web_routing_config || {};
-	obj.web_routing_config.routes = _calculateRoutes();
+	config.web_routing_config = config.web_routing_config || {};
+	config.web_routing_config.routes = _calculateRoutes();
 
-	console.log(obj);
+	console.log(config);
 
-	var xhr = new XMLHttpRequest();
-	var url = "/configure";
-	xhr.open("POST", url, true);
-	xhr.setRequestHeader("Content-Type", "application/json");
-	var data = JSON.stringify(obj);
-	xhr.send(data);
+	return config;
 };
 
 let _calculateRoutes = function() {
@@ -581,6 +528,123 @@ let _calculateRoutes = function() {
 		routes.push(conn);
 	}
 	return routes;
+};
+
+let _configureBlade = function() {
+	let obj = _generateJSON();
+	let xhr = new XMLHttpRequest();
+	let url = "/configure";
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	let data = JSON.stringify(obj);
+	xhr.send(data);
+};
+
+let _saveConfiguration = function() {
+	let obj = _generateJSON();
+	let uriContent = "data:application/octet-stream," + encodeURIComponent(JSON.stringify(obj, null, 2));
+	location.href = uriContent;
+};
+
+let _loadConfiguration = function() {
+	var input = document.createElement("input");
+	input.type = "file";
+	input.onchange = e => { 
+		var file = e.target.files[0]; 
+		var reader = new FileReader();
+		reader.readAsText(file,"UTF-8");
+		reader.onload = readerEvent => {
+			var content = readerEvent.target.result; // this is the content!
+			console.log( content );
+			try {
+				_createFromJSON(JSON.parse(content));
+			} catch (error) {
+				console.log(error);
+			}
+		};
+	};
+	input.click();
+};
+
+let _readParameter = function(el, param) {
+	let val;
+	let blockType = el.id.split("_").slice(0,-1).join("_");
+	if (param === "name") {
+		val = el.querySelector(".name").textContent;
+	}
+	else {
+		let inputType = blockProto[blockType].parameters.find(x => x.id === param).type;
+		val = el.querySelector(".parameter." + param.replace("_","-")).getElementsByTagName((inputType == "select" ? "select" : "input"))[0].value;
+		if (inputType === "number") { val = parseInt(val); }
+	}
+	return val;
+};
+
+let _setParameter = function(el, param, newValue) {
+	let blockType = el.id.split("_").slice(0,-1).join("_");
+	if (param === "name") {
+		el.querySelector(".name").textContent = newValue;
+	}
+	else {
+		let inputType = blockProto[blockType].parameters.find(x => x.id === param).type;
+		if (inputType === "checkbox") {
+			el.querySelector(".parameter." + param.replace("_","-")).getElementsByTagName("input")[0].checked = newValue;
+		} else {
+			el.querySelector(".parameter." + param.replace("_","-")).getElementsByTagName((inputType == "select" ? "select" : "input"))[0].value = newValue;
+		}
+	}
+};
+
+let _disableParameter = function(el, param, disable=true) {
+	let blockType = el.id.split("_").slice(0,-1).join("_");
+	let inputType = blockProto[blockType].parameters.find(x => x.id === param).type;
+	if (inputType === "checkbox") {
+		el.querySelector(".parameter." + param.replace("_","-")).getElementsByTagName("input")[0].disabled = disable;
+	} else {
+		el.querySelector(".parameter." + param.replace("_","-")).getElementsByTagName((inputType == "select" ? "select" : "input"))[0].disabled = disable;
+	}
+};
+
+
+let _createFromJSON = function(obj) {
+	instance.batch(function () {
+		for (let blockType in blockProto) {
+			for (let instance of blockProto[blockType].instances) {
+				_deleteBlock(instance);
+			}
+		}
+		for (let config_obj in obj) {
+			if (config_obj == "system_config"){
+				let el = _createBlock("system");
+				_setParameter(el, "reset", obj.system_config.reset);
+				_setParameter(el, "fpga", obj.system_config.fpga);
+				if (obj.network_config.hasOwnProperty("addresses")) {
+					_setParameter(el, "front-mgmt", obj.network_config.front_mgmt);
+					_setParameter(el, "rear-mgmt", obj.network_config.rear_mgmt);
+					_setParameter(el, "left-qsfp", obj.network_config.addresses.slice(0,(obj.network_config.addresses.length / 2)).join(","));
+					_setParameter(el, "right-qsfp", obj.network_config.addresses.slice((obj.network_config.addresses.length / 2)).join(","));
+				}
+			}
+			else if (config_obj == "ptp_config") {
+				let el = _createBlock("ptp");
+				for (let param in obj.ptp_config) {
+					_setParameter(el, param, obj.ptp_config[param]);
+				}
+			}
+			else if (config_obj == "crossbar_config") {
+				for (let cb of obj.crossbar_config.crossbars) {
+					let el = _createBlock("crossbar");
+					for (let param in cb) {
+						_setParameter(el, param, cb[param]);
+					}
+					_updateEndpoints(el.id, "crossbar");
+				}
+			}
+			else if (config_obj == "ptp_config") {
+	
+			}
+		}
+	});
 };
  
 jsPlumb.ready(function () {
@@ -594,7 +658,7 @@ jsPlumb.ready(function () {
 			}
 			else {
 				let button = document.createElement("button");
-				button.textContent = "Create " + blockProto[p].description + " element.";
+				button.textContent = "Create " + blockProto[p].description;
 				button.setAttribute("onclick", "_createBlock('" + blockProto[p].identifier + "')");
 				buttonArea.appendChild(button);
 			}
@@ -625,13 +689,15 @@ let blockProto = {
 		class: "system",
 		identifier: "system",
 		description: "System",
-		index: 0,
+		instances: [],
 		max_instances: 1,
 		deletable: false,
 		required: true,
 		parameters: [
 			{id: "access-ip", name: "Configuration IP", type: "text", value: "10.3.143.33"},
 			{id: "fpga", name: "FPGA", type: "select", value: ["STREAMING_40GbE", "STREAMING","MULTIVIEWER_40GbE", "MULTIVIEWER"], text: ["Streaming (40GbE)", "Streaming (4x10GbE)","Multiviewer (40GbE)", "Multiviewer (4x10GbE)"]},
+			{id: "reset", name: "Reset card before configuration", type: "checkbox", value: false},
+			{id: "update-ips", name: "Change IP addresses", type: "checkbox", value: false},
 			{id: "front-mgmt", name: "Front management IP", type: "text", value:"10.3.143.33/20"},
 			{id: "rear-mgmt", name: "Rear management IP", type: "text", value: "10.3.143.34/20"},
 			{id: "left-qsfp", name: "Left QSFP IPs", type: "text", value: "192.168.50.43/16,10.0.0.2/24,10.0.0.3/24,10.0.0.4/24"},
@@ -642,48 +708,52 @@ let blockProto = {
 		class: "ptp",
 		identifier: "ptp",
 		description: "PTP Setup",
-		index: 0,
+		instances: [],
 		max_instances: 1,
 		deletable: false,
 		required: true,
 		parameters: [
-			{id: "ptp-domain", name: "PTP Domain", type: "number", value: "127"},
-			{id: "primary-port", name: "Primary Agent port", type: "select", value: [0, 1], text: ["Left QSFP", "Right QSFP"]},
-			{id: "secondary-port", name: "Secondary Agent port", type: "select", value: [null, 0, 1], text: ["None", "Left QSFP", "Right QSFP"]},
-			{id: "delay-request", name: "Delay Request mode", type: "select", value: ["Unicast", "Multicast"]},
-			{id: "utc-offset", name: "Use UTC offset", type: "select", value: ["Ignore", "Use"]},
+			{id: "domain", name: "PTP Domain", type: "number", value: "127"},
+			{id: "port", name: "Primary Agent port", type: "select", value: [0, 1], text: ["Left QSFP", "Right QSFP"]},
+			{id: "sec-port", name: "Secondary Agent port", type: "select", value: [null, 0, 1], text: ["None", "Left QSFP", "Right QSFP"]},
+			{id: "delay-req", name: "Delay Request mode", type: "select", value: ["Unicast", "Multicast"]},
+			{id: "utc", name: "Use UTC offset", type: "select", value: ["Ignore", "Use"]},
 		]
 	},
 	rtp_receiver: {
 		class: "rtp-receiver",
 		identifier: "rtp_receiver",
 		description: "RTP Receiver",
-		index: 0,
+		instances: [],
 		max_instances: 108,
 		deletable: true,
 		required: false,
 		parameters: [
-			{id: "video-receivers", name: "Video receivers", type: "number", value: 0, oninput: true},
-			{id: "audio-receivers", name: "Audio receivers", type: "number", value: 0, oninput: true},
-			{id: "primary-port", name: "Primary streaming port", type: "select", value: [0, 1], text: ["Left QSFP", "Right QSFP"]},
-			{id: "secondary-port", name: "Secondary streaming port", type: "select", value: [null, 0, 1], text: ["None", "Left QSFP", "Right QSFP"]},
-			{id: "st2042", name: "Supports VC-2", type: "checkbox", value: false},
-			{id: "st2110-singlelink", name: "Supports ST2110 singlelink", type: "checkbox", value: false},
-			{id: "uhd-sample-interleaved", name: "Supports 12G 2SI", type: "checkbox", value: false},
+			{id: "num-video", name: "Video receivers", type: "number", value: 0, oninput: true},
+			{id: "num-audio", name: "Audio receivers", type: "number", value: 0, oninput: true},
+			{id: "audio-ch", name: "Audio receiver channels", type: "number", value: 16, oninput: true},
+			{id: "pri-port", name: "Primary streaming port", type: "select", value: [0, 1], text: ["Left QSFP", "Right QSFP"]},
+			{id: "sec-port", name: "Secondary streaming port", type: "select", value: [null, 0, 1], text: ["None", "Left QSFP", "Right QSFP"]},
+			{id: "vc2", name: "Supports VC-2", type: "checkbox", value: false},
+			{id: "uhd-singlelink", name: "Supports ST2110 singlelink", type: "checkbox", value: false},
+			{id: "uhd-2si", name: "Supports 12G 2SI", type: "checkbox", value: false},
+			{id: "switch-time", name: "DTS (clean switch)", type: "select", value: [1, 2], text: ["Not enabled", "Automatic timing"]},
+			{id: "switch-type", name: "DTS (clean switch) type", type: "select", value: ["BBM", "MBB"], text: ["Break Before Make", "Make Before Break"]},
+
 		]
 	},
 	crossbar: {
 		class: "crossbar",
 		identifier: "crossbar",
 		description: "Crossbar",
-		index: 0,
+		instances: [],
 		max_instances: 20,
 		deletable: true,
 		required: false,
 		parameters: [
-			{id: "inputs", name: "Inputs", type: "number", value: 0, oninput: true},
-			{id: "outputs", name: "Outputs", type: "number", value: 0, oninput: true},
-			{id: "crossbar-type", name: "Crossbar type", type: "select", value: ["a_v", "video", "large"], text: ["AV", "Video", "Audio"], oninput: true},
+			{id: "num-in", name: "Inputs", type: "number", value: 0, oninput: true},
+			{id: "num-out", name: "Outputs", type: "number", value: 0, oninput: true},
+			{id: "xbar-type", name: "Crossbar type", type: "select", value: ["a_v", "video", "large"], text: ["AV", "Video", "Audio"], oninput: true},
 			{id: "channels", name: "Audio channels", type: "number", value: 16},
 		]
 	},
@@ -691,22 +761,22 @@ let blockProto = {
 		class: "io-module",
 		identifier: "io_module",
 		description: "IO Module",
-		index: 0,
+		instances: [],
 		max_instances: 1,
 		deletable: true,
 		required: false,
 		parameters: [
-			{id: "inputs", name: "SDI Inputs", type: "number", value: 0, disabled: true, oninput: true},
-			{id: "outputs", name: "SDI Outputs", type: "number", value: 0, disabled: true, oninput: true},
-			{id: "io-module-type", name: "IO Module type", type: "select", value: ["10/10", "18/2", "2/18", "2/2/16"], text: ["10in/10out", "2in/18out", "18in/2out", "2/2/16 configurable"], oninput: true},
-			{id: "embed", name: "Audio embedding", type: "select", value: ["Embed", "Bypass", "Off"]},
+			{id: "num-ins", name: "SDI Inputs", type: "number", value: 0, disabled: true, oninput: true},
+			{id: "num-outs", name: "SDI Outputs", type: "number", value: 0, disabled: true, oninput: true},
+			{id: "io-module-type", name: "IO Module type", type: "select", value: ["10/10", "18/2", "2/18", "2/2/16"], text: ["10in/10out", "2in/18out", "18in/2out", "2/2/16 (not supported yet)"], oninput: true},
+			{id: "audio", name: "Audio embedding", type: "select", value: ["Embed", "Bypass", "Off"]},
 		]
 	},
 	video_transmitter: {
 		class: "video-transmitter",
 		identifier: "video_transmitter",
 		description: "Video Transmitter",
-		index: 0,
+		instances: [],
 		max_instances: 20,
 		deletable: true,
 		required: false,
@@ -715,16 +785,16 @@ let blockProto = {
 			audio: { in: 0, out: 0},
 		},
 		parameters: [
-			{id: "primary-port", name: "Primary streaming port", type: "select", value: [0, 1], text: ["Left QSFP", "Right QSFP"]},
-			{id: "primary-mc", name: "Primary Multicast", type: "text", value: "235.0.0.1:9000"},
-			{id: "secondary-port", name: "Secondary streaming port", type: "select", value: [null, 0, 1], text: ["None", "Left QSFP", "Right QSFP"]},
-			{id: "secondary-mc", name: "Secondary Multicast", type: "text", value: "235.0.1.1:9000"},
+			{id: "pri-port", name: "Primary streaming port", type: "select", value: [0, 1], text: ["Left QSFP", "Right QSFP"]},
+			{id: "pri-mc", name: "Primary Multicast", type: "text", value: "235.0.0.1:9000"},
+			{id: "sec-port", name: "Secondary streaming port", type: "select", value: [null, 0, 1], text: ["None", "Left QSFP", "Right QSFP"]},
+			{id: "sec-mc", name: "Secondary Multicast", type: "text", value: "235.0.1.1:9000"},
 			{id: "format", name: "Streaming format", type: "select", value: ["ST2110_GPM", "ST2022_6", "ST2110_BPM", "ST2042_raw"], oninput: true},
-			{id: "constraint-format", name: "Constraint (format)", type: "select", 
+			{id: "constr-format", name: "Constraint (format)", type: "select", 
 				value: [null, "PAL", "NTSC", "HD720p25", "HD720p29_97", "HD720p30", "HD720p50", "HD720p59_94", "HD720p60", "HD1080p23_98", "HD1080p24", "HD1080p25", "HD1080p29_97", "HD1080p30", "HD1080i50", "HD1080i59_94", "HD1080i60", "HD1080p50", "HD1080p59_94", "HD1080p60", "HD2160p50", "HD2160p59_94", "HD2160p60", "HD1080p24_DCI", "HD1080i50_DCI"],
 				text: ["N/A", "PAL", "NTSC", "HD720p25", "HD720p29_97", "HD720p30", "HD720p50", "HD720p59_94", "HD720p60", "HD1080p23_98", "HD1080p24", "HD1080p25", "HD1080p29_97", "HD1080p30", "HD1080i50", "HD1080i59_94", "HD1080i60", "HD1080p50", "HD1080p59_94", "HD1080p60", "HD2160p50", "HD2160p59_94", "HD2160p60", "HD1080p24_DCI", "HD1080i50_DCI"],
 			},
-			{id: "constraint-bandwidth", name: "Constraint (bandwidth)", type: "select", value: [null, "b1_5Gb", "b3_0Gb", "b12_0Gb"], text: ["N/A", "1.5Gbit/s", "3Gbit/s", "12Gbit/s"]},
+			{id: "constr-bandwidth", name: "Constraint (bandwidth)", type: "select", value: [null, "b1_5Gb", "b3_0Gb", "b12_0Gb"], text: ["N/A", "1.5Gbit/s", "3Gbit/s", "12Gbit/s"]},
 			{id: "audio", name: "Audio embedding (2022-6)", type: "select", value: ["Embed", "Bypass", "Off"]},
 			{id: "payload", name: "Payload ID", type: "number", value: 97},
 			{id: "reserve-uhd", name: "Supports ST2110 singlelink", type: "checkbox", value: false},
@@ -734,7 +804,7 @@ let blockProto = {
 		class: "audio-transmitter",
 		identifier: "audio_transmitter",
 		description: "Audio Transmitter",
-		index: 0,
+		instances: [],
 		max_instances: 100,
 		deletable: true,
 		required: false,
@@ -743,16 +813,16 @@ let blockProto = {
 			audio: { in: 1, out: 0},
 		},
 		parameters: [
-			{id: "primary-port", name: "Primary streaming port", type: "select", value: [0, 1], text: ["Left QSFP", "Right QSFP"]},
-			{id: "primary-mc", name: "Primary Multicast", type: "text", value: "236.0.0.1:9000"},
-			{id: "secondary-port", name: "Secondary streaming port", type: "select", value: [null, 0, 1], text: ["None", "Left QSFP", "Right QSFP"]},
-			{id: "secondary-mc", name: "Secondary Multicast", type: "text", value: "236.0.1.1:9000"},
+			{id: "pri-port", name: "Primary streaming port", type: "select", value: [0, 1], text: ["Left QSFP", "Right QSFP"]},
+			{id: "pri-mc", name: "Primary Multicast", type: "text", value: "236.0.0.1:9000"},
+			{id: "sec-port", name: "Secondary streaming port", type: "select", value: [null, 0, 1], text: ["None", "Left QSFP", "Right QSFP"]},
+			{id: "sec-mc", name: "Secondary Multicast", type: "text", value: "236.0.1.1:9000"},
 			{id: "format", name: "Streaming format", type: "select", value: ["L24", "L16", "AM824"]},
 			{id: "packet-time", name: "Packet time", type: "select", 
 				value: ["p0_125", "p0_250", "p0_333", "p0_500", "p0_666", "p1"], 
 				text: ["0.125ms", "0.250ms", "0.333ms", "0.500ms", "0.666ms", "1.000ms"]
 			},
-			{id: "audio-channels", name: "Audio channels", type: "number", value: 16},
+			{id: "num-channels", name: "Audio channels", type: "number", value: 16},
 			{id: "payload", name: "Payload ID", type: "number", value: 96},
 		]
 	},
@@ -760,7 +830,7 @@ let blockProto = {
 		class: "video-delay",
 		identifier: "video_delay",
 		description: "Video Delay",
-		index: 0,
+		instances: [],
 		max_instances: 24,
 		deletable: true,
 		required: false,
@@ -780,7 +850,7 @@ let blockProto = {
 		class: "audio-delay",
 		identifier: "audio_delay",
 		description: "Audio Delay",
-		index: 0,
+		instances: [],
 		max_instances: 24,
 		deletable: true,
 		required: false,
@@ -789,9 +859,9 @@ let blockProto = {
 			audio: { in: 1, out: 1},
 		},
 		parameters: [
-			{id: "audio-channels", name: "Audio channels", type: "number", value: 16},
+			{id: "num-channels", name: "Audio channels", type: "number", value: 16},
 			{id: "frequency", name: "Frequency", type: "select", value: ["F48000", "F96000"], text: ["48KHz", "96Khz"] },
-			{id: "allocated-time", name: "Allocated delay time (ms)", type: "number", value: 100},
+			{id: "alloc-time", name: "Allocated delay time (ms)", type: "number", value: 100},
 			{id: "delay-time", name: "Delay time (ms)", type: "number", value: 0},
 		]
 	},
