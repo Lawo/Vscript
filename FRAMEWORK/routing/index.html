@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+    <head>
+
+        <title>C100 routing</title>
+        <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"/>
+        <link rel="stylesheet" href="jsplumb/css/jsplumbtoolkit-defaults.css">
+        <link rel="stylesheet" href="routing.css">
+
+
+    </head>
+    <body>
+        <div id="add-blocks">
+            <button id="generate-json" onclick="_generateJSON()">Configure card!</button>
+            <br/>
+        </div>
+        <div id="status-output">
+        </div>
+        <div class="routing-main">
+            <div class="routing-canvas canvas-wide routing jtk-surface" id="canvas">
+            </div>
+        </div>
+    </body>
+
+    <script src="jsplumb/dist/js/jsplumb.js"></script>
+    <script src="routing.js"></script>
+
+    <script>
+        var ws = new WebSocket('ws://localhost:40510');
+        // event emmited when connected
+        ws.onopen = function () {
+            console.log('websocket is connected ...')
+            // sending a send event to websocket server
+            ws.send('connected')
+        }
+        // event emmited when receiving message 
+        ws.onmessage = function (ev) {
+            if (ev.data == "") { return; }
+            let status_field = document.getElementById("status-output");
+            status_field.textContent = status_field.textContent + "\n" + ev.data;
+            status_field.scrollTop = status_field.scrollHeight;
+            //console.log(parsed);
+        }
+    </script>
+
+
+</html>
