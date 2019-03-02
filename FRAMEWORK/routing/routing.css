@@ -176,8 +176,7 @@ li {
     color: #434343;
     font-weight: 400;
     padding: 4px;
-    z-index:10;
-
+    z-index: 30;
 }
 
 .jtk-overlay.jtk-hover {
@@ -228,7 +227,7 @@ path {
     white-space: pre;
 }
 
-.routing .rtp-receiver, .io-module, .audio-delay, .audio-transmitter, .video-delay, .video-transmitter, .crossbar {
+.routing .rtp-receiver, .sdi, .audio-delay, .audio-transmitter, .video-delay, .video-transmitter, .crossbar {
     border: 1px solid #346789;
     box-shadow: 2px 2px 19px #aaa;
     -o-box-shadow: 2px 2px 19px #aaa;
@@ -299,16 +298,8 @@ path {
 }
 
 .routing .jtk-endpoint, .endpointTargetLabel, .endpointSourceLabel {
-    z-index: 21;
+    z-index: 25;
     cursor: pointer;
-}
-
-.routing .audio-endpoint {
-    z-index: 22;
-}
-
-.routing .video-endpoint {
-    z-index: 23;
 }
 
 .routing .audio-connector {

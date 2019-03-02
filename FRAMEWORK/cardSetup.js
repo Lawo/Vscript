@@ -369,7 +369,7 @@ module.exports = function () {
 	*/
 	this.ptp_setup = async function (config) {
 		this.verbose("Running ptp_setup()...", 16);
-		if(!this.READY) { await this.basics(config);	}
+		if(!this.READY) { await this.basics(config); }
 		if (typeof config === "undefined") {
 			this.verbose("No config entered for ptp_setup");
 			return -1;
