@@ -310,8 +310,10 @@ module.exports = function () {
 	* @param {string} [config.mode] - The interface mode; "40gbe" | "10gbe"
 	* @param {string} [config.front_mgmt] - The IP and prefix for the front management port; "A.B.C.D/X"
 	* @param {string} [config.rear_mgmt] - The IP and prefix for the rear management port; "A.B.C.D/X"
-	* @param {string[]} [config.addresses] - The IP addresses for the QSFP interfaces; ["A.B.C.D",...]
-	* @param {number[]} [config.prefixes] - The IP addresses masks for the QSFP interfaces; [16,24,...]
+	* @param {string} [config.front_mgmt_gateway] - The IP for the front management port gateway; "A.B.C.D"
+	* @param {string} [config.rear_mgmt_gateway] - The IP for the rear management port gateway; "A.B.C.D"
+	* @param {string[]} [config.addresses] - The IP addresses for the QSFP interfaces; ["A.B.C.D/X",...]
+	* @param {string[]} [config.gateways] - The IP addresses for the QSFP interface gateways; ["A.B.C.D",...]
 	* @param {boolean} [config.reboot] - Indicates if the script should reboot the blade after changing the configuration
 	*/
 	this.network_setup = async function (config) {
@@ -323,31 +325,35 @@ module.exports = function () {
 		}
 		if (config.hasOwnProperty("network_config")) { config = config.network_config; }
 
-		let numInterfaces;
 		// Set the number of interfaces to configure based on 40GbE/10GbE
 		if (!(config.hasOwnProperty("mode") && config.hasOwnProperty("addresses"))) { return -1; }
 
-		// Part changed in proposal*********
-		if (config.mode === "40gbe" && config.addresses.length === 2) {
-			numInterfaces = 2;
-		} else if (config.mode === "10gbe" && config.addresses.length === 8) {
-			numInterfaces = 8;
-		} else {
-			return -1;
-		}
-
-		// For each interface, set the IP and prefix, then save
-		for (let i = 0; i < numInterfaces; i++) {
-			if (config.addresses[i].split("/").length > 1) {
-				await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i].split("/")[0], { ip: this.ip });
-				await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.addresses[i].split("/")[1]), { ip: this.ip });
-			} else {
-				await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i], { ip: this.ip });
-				await this.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.prefixes[i]), { ip: this.ip });
+		config.addresses.push(config.front_mgmt, config.rear_mgmt);
+		if (config.hasOwnProperty("gateways")) { config.gateways.push(config.front_mgmt_gateway, config.rear_mgmt_gateway); }
+		for (let i = 0; i < config.addresses.length; i++) {
+			let current_ip = await vscript.read("network_interfaces.ports[" + i + "].current_configuration.base.ip_addresses[0]", "ip_address");
+			let current_prefix = await vscript.read("network_interfaces.ports[" + i + "].current_configuration.base.ip_addresses[0]", "prefix");
+			if (current_ip != config.addresses[i].split("/")[0]) {
+				await vscript.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i].split("/")[0]);
+				config.reboot = true;
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
 			}
-			await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", { ip: this.ip} );
+			if (current_prefix != config.addresses[i].split("/")[1]) {
+				await vscript.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.addresses[i].split("/")[1]));
+				config.reboot = true;
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
+			}
 		}
-
+		for (let i = 0; i < config.gateways.length; i++) {
+			let current_gateway = await vscript.read("network_interfaces.ports[" + i + "].current_configuration.base.routes[0]", "via");
+			if (current_gateway != config.gateways[i]) {
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "].desired_configuration.base", "add_route", "Click");
+				await vscript.pause_ms(250);
+				await vscript.write("network_interfaces.ports[" + i + "].desired_configuration.base.routes[0]", "via", config.gateways[i]);
+				config.reboot = true;
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
+			}
+		}
 
 		// If a reboot is requested,perform it
 		if (config.reboot === true) {
@@ -357,6 +363,7 @@ module.exports = function () {
 		// Return 1 to indicate success (otherwise, -1)
 		this.verbose("Finished network_setup()...", 15);
 		return 1;
+
 	},
 
 	/**
