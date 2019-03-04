@@ -26,5 +26,13 @@ module.exports = {
             "error",
             "always"
         ]
+    },
+    "globals": {
+        "document": "readonly",
+        "jsPlumb": "readonly",
+        "window": true,
+        "location": true,
+        "XMLHttpRequest": true,
+        "FileReader": true,
     }
 };

@@ -116,17 +116,6 @@ let connectorPaintStyle = {
 		},
 	};
 
-instance.bind("connectionDrag", function(conn) {
-	instance.selectEndpoints({ target: jsPlumb.getSelector(".jtk-node"), scope: conn.scope}).showOverlays();
-});
-
-instance.bind("connectionDragStop", function(conn) {
-	instance.selectEndpoints({ target: jsPlumb.getSelector(".jtk-node"), scope: conn.scope}).hideOverlays();
-});
-
-instance.bind("connectionAborted", function(conn) {
-	instance.selectEndpoints({ target: jsPlumb.getSelector(".jtk-node"), scope: conn.scope}).hideOverlays();
-});
 	
 let _addEndpoints = function (toId, sourceAnchors, targetAnchors, params) {
 	for (let i = 0; i < sourceAnchors.length; i++) {
@@ -293,7 +282,7 @@ let _updateEndpoints = function (blockId) {
 			newIo.audio.in = 1;
 		}
 	}
-	else if (["audio_transmitter", "audio_delay", "video_delay"].includes(blockType)) {
+	else if (["audio_transmitter", "audio_delay", "video_delay", "audio_src"].includes(blockType)) {
 		newIo = JSON.parse(JSON.stringify(blockProto[blockType].fixed_endpoints));
 	}
 
@@ -693,16 +682,17 @@ jsPlumb.ready(function () {
 		}
 
 
-		instance.bind("connectionDrag", function (connection) {
-			//console.log("connection " + connection.id + " is being dragged. suspendedElement is ", connection.suspendedElement, " of type ", connection.suspendedElementType);
-		});
 
-		instance.bind("connectionDragStop", function (connection) {
-			//console.log("connection " + connection.id + " was dragged");
+		instance.bind("connectionDrag", function(conn) {
+			instance.selectEndpoints({ target: jsPlumb.getSelector(".jtk-node"), scope: conn.scope}).showOverlays();
 		});
-
-		instance.bind("connectionMoved", function (params) {
-			//console.log("connection " + params.connection.id + " was moved");
+		
+		instance.bind("connectionDragStop", function(conn) {
+			instance.selectEndpoints({ target: jsPlumb.getSelector(".jtk-node"), scope: conn.scope}).hideOverlays();
+		});
+		
+		instance.bind("connectionAborted", function(conn) {
+			instance.selectEndpoints({ target: jsPlumb.getSelector(".jtk-node"), scope: conn.scope}).hideOverlays();
 		});
 	});
 
@@ -897,6 +887,26 @@ let blockProto = {
 			{id: "frequency", name: "Frequency", type: "select", value: ["F48000", "F96000"], text: ["48KHz", "96Khz"] },
 			{id: "alloc-time", name: "Allocated delay time (ms)", type: "number", value: 100, range: [0,10000]},
 			{id: "delay-time", name: "Delay time (ms)", type: "number", value: 0, range: [0,10000]},
+		]
+	},
+	audio_src: {
+		class: "audio-src",
+		identifier: "audio_src",
+		description: "Audio SRC",
+		config_array: "srcs",
+		instances: [],
+		max_instances: 24,
+		deletable: true,
+		required: false,
+		fixed_endpoints: {
+			video: { in: 0, out: 0},
+			audio: { in: 1, out: 1},
+		},
+		parameters: [
+			{id: "channels", name: "SRC Channels", type: "select", 
+				value: ["None", "Ch_0_15", "Ch_16_31", "Ch_32_47", "Ch_48_63", "Ch_64_79"], 
+				text: ["None", "Ch 1-16", "Ch 17-32", "Ch 33-48", "Ch 49-64", "Ch 65-80"] 
+			},
 		]
 	},
 };
