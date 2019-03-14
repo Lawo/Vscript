@@ -15,6 +15,8 @@
             <button id="generate-json" onclick="_saveConfiguration()">Save JSON</button>
             <button id="load-json" onclick="_loadConfiguration()">Load JSON</button>
             <button id="configure-blade" onclick="_configureBlade()">Configure card!</button>
+            <button id="readout-blade" onclick="_readOutBlade()">Read from card >>></button>
+            <input id="readout-ip" type="text" value="10.3.143.35"></input>
             <br/>
             <br/>
         </div>
@@ -30,21 +32,7 @@
     <script src="routing.js"></script>
 
     <script>
-        var ws = new WebSocket('ws://localhost:40510');
-        // event emmited when connected
-        ws.onopen = function () {
-            console.log('websocket is connected ...')
-            // sending a send event to websocket server
-            ws.send('connected')
-        }
-        // event emmited when receiving message 
-        ws.onmessage = function (ev) {
-            if (ev.data == "") { return; }
-            let status_field = document.getElementById("status-output");
-            status_field.textContent = status_field.textContent + "\n" + ev.data;
-            status_field.scrollTop = status_field.scrollHeight;
-            //console.log(parsed);
-        }
+        
     </script>
 
 

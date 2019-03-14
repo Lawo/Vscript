@@ -529,8 +529,8 @@ let _calculateRoutes = function() {
 
 let _setRoutes = function(routes) {
 	for (let r of routes) {
-		let sourceId = r.source_type + "_" + r.source_idx;
-		let targetId = r.target_type + "_" + r.target_idx;
+		let sourceId = (r.source_type.includes("crossbar") ? "crossbar" : r.source_type) + "_" + r.source_idx;
+		let targetId = (r.target_type.includes("crossbar") ? "crossbar" : r.target_type) + "_" + r.target_idx;
 		let sourceEndpoint = instance.selectEndpoints({ source: sourceId, scope: r.signal_type}).get(r.source_endpoint_idx);
 		let targetEndpoint = instance.selectEndpoints({ target: targetId, scope: r.signal_type}).get(r.target_endpoint_idx);
 		instance.connect({ uuids: [sourceEndpoint.getUuid(), targetEndpoint.getUuid()]});
@@ -544,6 +544,16 @@ let _configureBlade = function() {
 	xhr.open("POST", url, true);
 	xhr.setRequestHeader("Content-Type", "application/json");
 	let data = JSON.stringify(obj);
+	xhr.send(data);
+};
+
+let _readOutBlade = function() {
+	let ip = document.getElementById("readout-ip").value;
+	let xhr = new XMLHttpRequest();
+	let url = "/readout";
+	xhr.open("POST", url, true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	let data = JSON.stringify({ip: ip});
 	xhr.send(data);
 };
 
@@ -909,4 +919,25 @@ let blockProto = {
 			},
 		]
 	},
+};
+
+
+var ws = new WebSocket("ws://localhost:40510");
+// event emmited when connected
+ws.onopen = function () {
+	console.log("websocket is connected ...");
+	// sending a send event to websocket server
+	ws.send("connected");
+};
+// event emmited when receiving message 
+ws.onmessage = function (ev) {
+	if (ev.data == "") { return; }
+	if (typeof JSON.parse(ev.data) === "object") {
+
+	} else {
+		let status_field = document.getElementById("status-output");
+		status_field.textContent = status_field.textContent + "\n" + ev.data;
+		status_field.scrollTop = status_field.scrollHeight;
+	}
+	
 };
