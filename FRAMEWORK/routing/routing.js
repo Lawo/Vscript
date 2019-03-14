@@ -932,8 +932,8 @@ ws.onopen = function () {
 // event emmited when receiving message 
 ws.onmessage = function (ev) {
 	if (ev.data == "") { return; }
-	if (typeof JSON.parse(ev.data) === "object") {
-
+	if (typeof JSON.parse(ev.data) == "object") {
+		_createFromJSON(JSON.parse(ev.data));
 	} else {
 		let status_field = document.getElementById("status-output");
 		status_field.textContent = status_field.textContent + "\n" + ev.data;

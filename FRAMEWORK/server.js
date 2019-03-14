@@ -34,6 +34,7 @@ app.post("/readout", async function(req, res) {
 	try {
 		cardReader.readCard(req.body.ip).then((result) => {
 			console.log(JSON.stringify(result, null, 2));
+			wsConnection.send(JSON.stringify(result));
 		});
 	} catch (error) {
 		console.log(error);
