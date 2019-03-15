@@ -533,6 +533,7 @@ let _setRoutes = function(routes) {
 		let targetId = (r.target_type.includes("crossbar") ? "crossbar" : r.target_type) + "_" + r.target_idx;
 		let sourceEndpoint = instance.selectEndpoints({ source: sourceId, scope: r.signal_type}).get(r.source_endpoint_idx);
 		let targetEndpoint = instance.selectEndpoints({ target: targetId, scope: r.signal_type}).get(r.target_endpoint_idx);
+		if (typeof sourceEndpoint == "undefined" || typeof targetEndpoint == "undefined") { return; }
 		instance.connect({ uuids: [sourceEndpoint.getUuid(), targetEndpoint.getUuid()]});
 	}
 };
@@ -627,7 +628,7 @@ let _createFromJSON = function(obj) {
 	instance.batch(function () {
 		for (let blockType in blockProto) {
 			for (let instance of blockProto[blockType].instances) {
-				_deleteBlock(instance);
+				if (instance !== null) { _deleteBlock(instance); }
 			}
 		}
 		for (let config_obj in obj) {
@@ -635,7 +636,8 @@ let _createFromJSON = function(obj) {
 				let el = _createBlock("system");
 				_setParameter(el, "reset", obj.system_config.reset);
 				_setParameter(el, "fpga", obj.system_config.fpga);
-				if (obj.network_config.hasOwnProperty("addresses")) {
+				if (obj.hasOwnProperty("ip")) { _setParameter(el, "access-ip", obj.ip); }
+				if (obj.hasOwnProperty("network_config") && obj.network_config.hasOwnProperty("addresses")) {
 					_setParameter(el, "front-mgmt", obj.network_config.front_mgmt);
 					_setParameter(el, "rear-mgmt", obj.network_config.rear_mgmt);
 					_setParameter(el, "left-qsfp", obj.network_config.addresses.slice(0,(obj.network_config.addresses.length / 2)).join(","));
@@ -651,6 +653,10 @@ let _createFromJSON = function(obj) {
 			else if (config_obj == "sdi_config") {
 				let el = _createBlock("sdi");
 				_setParameter(el, "io-module-type", obj.sdi_config.io_module_type);
+				if (obj.sdi_config.io_module_type == "2/2/16") {
+					_setParameter(el, "num-in", obj.sdi_config.num_in);
+					_setParameter(el, "num-out", obj.sdi_config.num_out);
+				}
 				_updateEndpoints(el.id);
 			}
 			else if (["network_config", "ip", "sdi_config", "web_routing_config"].includes(config_obj)){
@@ -670,7 +676,7 @@ let _createFromJSON = function(obj) {
 			}
 		}
 
-		_setRoutes(obj.web_routing_config.routes);
+		if (obj.hasOwnProperty("web_routing_config")) { _setRoutes(obj.web_routing_config.routes); }
 	});
 };
  
@@ -754,7 +760,7 @@ let blockProto = {
 		description: "RTP Receiver",
 		config_array: "receivers",
 		instances: [],
-		max_instances: 108,
+		max_instances: 200,
 		deletable: true,
 		required: false,
 		parameters: [
@@ -933,6 +939,7 @@ ws.onopen = function () {
 ws.onmessage = function (ev) {
 	if (ev.data == "") { return; }
 	if (typeof JSON.parse(ev.data) == "object") {
+		console.log(JSON.parse(ev.data));
 		_createFromJSON(JSON.parse(ev.data));
 	} else {
 		let status_field = document.getElementById("status-output");

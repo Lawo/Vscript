@@ -17,6 +17,15 @@ let statusCallback = function(status) {
 
 let cardReader = new ReadOut.CardReader();
 
+var WebSocketServer = require("ws").Server,
+	wss = new WebSocketServer({port: 40510});
+wss.on("connection", function (ws) {
+	wsConnection = ws;
+	ws.on("message", function (message) {
+		console.log("received: %s", message);
+	});
+});
+
 
 app.post("/configure", async function(req, res) {
 	console.log(JSON.stringify(req.body, null, 2));
@@ -33,12 +42,13 @@ app.post("/readout", async function(req, res) {
 	console.log(req.body);
 	try {
 		cardReader.readCard(req.body.ip).then((result) => {
-			console.log(JSON.stringify(result, null, 2));
+			//console.log(JSON.stringify(result, null, 2));
 			wsConnection.send(JSON.stringify(result));
 		});
 	} catch (error) {
 		console.log(error);
 	}
+	res.sendStatus(200);
 });
 
 app.listen(port, (err) => {
@@ -46,13 +56,4 @@ app.listen(port, (err) => {
 		return console.log("something bad happened", err);
 	}
 	console.log(`server is listening on ${port}`);
-});
-
-var WebSocketServer = require("ws").Server,
-	wss = new WebSocketServer({port: 40510});
-wss.on("connection", function (ws) {
-	wsConnection = ws;
-	ws.on("message", function (message) {
-		console.log("received: %s", message);
-	});
 });

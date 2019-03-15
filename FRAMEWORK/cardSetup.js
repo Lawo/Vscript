@@ -371,6 +371,7 @@ module.exports = function () {
 	* @param {object} config - The object containing the configuration parameters
 	* @param {number} config.domain - The PTP domain to listen on
 	* @param {number} config.port - The interface number to listen on
+	* @param {number} [config.sec_port] - The secondary interface number to listen on
 	* @param {string} config.delay_req - "Unicast" | "Multicast"
 	* @param {string} config.utc - UTC offset; "Ignore" | "Use"
 	*/
