@@ -233,6 +233,8 @@ class CardReader {
 	}
 
 	getIndexes(kwl) {
+		console.log(kwl);
+		if (kwl == null) { return [0,0]; }
 		let idxs = [];
 		let reducedKwl = kwl;
 		while (reducedKwl !== vscript.path_parent(reducedKwl)) {

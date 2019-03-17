@@ -14,6 +14,7 @@
         <div id="add-blocks">
             <button id="generate-json" onclick="_saveConfiguration()">Save JSON</button>
             <button id="load-json" onclick="_loadConfiguration()">Load JSON</button>
+            <button id="auto-layout" onclick="_autoLayout()">Auto Layout</button>
             <button id="configure-blade" onclick="_configureBlade()">Configure card!</button>
             <button id="readout-blade" onclick="_readOutBlade()">Read from card >>></button>
             <input id="readout-ip" type="text" value="10.135.60.139"></input>
@@ -22,12 +23,14 @@
         </div>
         <div id="status-output">
         </div>
-        <div class="routing-main">
+        <div class="routing-main" id="routing-area">
             <div class="routing-canvas canvas-wide routing jtk-surface" id="canvas">
             </div>
         </div>
     </body>
 
+    <script src="dagre/dist/dagre.js"></script>
+    <script src="panzoom/panzoom.js"></script>
     <script src="jsplumb/dist/js/jsplumb.js"></script>
     <script src="routing.js"></script>
 

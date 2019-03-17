@@ -624,6 +624,39 @@ let _disableParameter = function(el, param, disable=true) {
 	}
 };
 
+let _autoLayout = function() {
+	let dg = new dagre.graphlib.Graph();
+	dg.setGraph({nodesep:20,ranksep:20,marginx:40,marginy:40, rankdir: "LR"});
+	dg.setDefaultEdgeLabel(function() { return {}; });
+	for (let blockType in blockProto) {
+		if (["system", "ptp"].includes(blockType)) { continue; }
+		for (let instance of blockProto[blockType].instances) {
+			if (instance == null) { continue; }
+			let el = document.getElementById(instance);
+			if (!el.querySelector(".parameter-section").hidden) {
+				_expandBlock(el.id);
+			}
+			dg.setNode(el.id, { width: el.clientWidth, height: el.clientHeight} );
+		}
+	}
+	let connectors = instance.select();
+	for (let i = 0; i < connectors.length; i++) {
+		let conn = connectors.get(i);
+		//console.log(conn);
+		dg.setEdge(conn.sourceId, conn.targetId);
+	}
+	dagre.layout(dg);
+	dg.nodes().forEach(
+		function(n) {
+			let node = dg.node(n);
+			let top = Math.round(node.y-node.height/2)+"px";
+			let left = Math.round(node.x-node.width/2)+"px";
+			document.getElementById(n).style.left = left;
+			document.getElementById(n).style.top = top;
+		});
+	instance.repaintEverything();
+};
+
 let _createFromJSON = function(obj) {
 	instance.batch(function () {
 		for (let blockType in blockProto) {
@@ -677,6 +710,7 @@ let _createFromJSON = function(obj) {
 		}
 
 		if (obj.hasOwnProperty("web_routing_config")) { _setRoutes(obj.web_routing_config.routes); }
+		_autoLayout();
 	});
 };
  
@@ -710,6 +744,8 @@ jsPlumb.ready(function () {
 		instance.bind("connectionAborted", function(conn) {
 			instance.selectEndpoints({ target: jsPlumb.getSelector(".jtk-node"), scope: conn.scope}).hideOverlays();
 		});
+
+		panzoom(canvas, {autocenter: true, bounds: {top: 200, bottom: 200, left: 200, right: 200}});
 	});
 
 });
