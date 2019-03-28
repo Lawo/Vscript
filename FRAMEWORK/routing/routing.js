@@ -529,11 +529,12 @@ let _calculateRoutes = function() {
 
 let _setRoutes = function(routes) {
 	for (let r of routes) {
+		console.log(JSON.stringify(r));
 		let sourceId = (r.source_type.includes("crossbar") ? "crossbar" : r.source_type) + "_" + r.source_idx;
 		let targetId = (r.target_type.includes("crossbar") ? "crossbar" : r.target_type) + "_" + r.target_idx;
 		let sourceEndpoint = instance.selectEndpoints({ source: sourceId, scope: r.signal_type}).get(r.source_endpoint_idx);
 		let targetEndpoint = instance.selectEndpoints({ target: targetId, scope: r.signal_type}).get(r.target_endpoint_idx);
-		if (typeof sourceEndpoint == "undefined" || typeof targetEndpoint == "undefined") { return; }
+		if (typeof sourceEndpoint == "undefined" || typeof targetEndpoint == "undefined") { continue; }
 		instance.connect({ uuids: [sourceEndpoint.getUuid(), targetEndpoint.getUuid()]});
 	}
 };
@@ -626,7 +627,7 @@ let _disableParameter = function(el, param, disable=true) {
 
 let _autoLayout = function() {
 	let dg = new dagre.graphlib.Graph();
-	dg.setGraph({nodesep:20,ranksep:20,marginx:40,marginy:40, rankdir: "LR"});
+	dg.setGraph({nodesep:20,ranksep:40,marginx:40,marginy:40, rankdir: "LR"});
 	dg.setDefaultEdgeLabel(function() { return {}; });
 	for (let blockType in blockProto) {
 		if (["system", "ptp"].includes(blockType)) { continue; }
@@ -713,7 +714,27 @@ let _createFromJSON = function(obj) {
 		_autoLayout();
 	});
 };
- 
+
+let _zoom = function(direction) {
+	let zoom;
+	switch (direction) {
+	case -1:
+		zoom = canvas.style.zoom * 0.9;
+		break;
+	case 1:
+		zoom = canvas.style.zoom * 1.1;
+		break;
+	case 0:
+		zoom = 1;
+		break;
+	}
+	canvas.style.zoom = zoom;
+	instance.setZoom(zoom);
+	instance.repaintEverything();
+
+};
+
+
 jsPlumb.ready(function () {
 	// suspend drawing and initialise.
 	instance.batch(function () {
@@ -730,6 +751,13 @@ jsPlumb.ready(function () {
 				buttonArea.appendChild(button);
 			}
 		}
+		for (let b of [{name: "Zoom in", value: "1"}, {name: "Zoom out", value: "-1"}, {name: "Reset zoom", value: "0"}]) {
+			let button = document.createElement("button");
+			button.style.cssFloat = "right";
+			button.textContent = b.name;
+			button.setAttribute("onclick", "_zoom(" + b.value + ")");
+			buttonArea.appendChild(button);
+		}
 
 
 
@@ -745,7 +773,6 @@ jsPlumb.ready(function () {
 			instance.selectEndpoints({ target: jsPlumb.getSelector(".jtk-node"), scope: conn.scope}).hideOverlays();
 		});
 
-		panzoom(canvas, {autocenter: true, bounds: {top: 200, bottom: 200, left: 200, right: 200}});
 	});
 
 });
@@ -974,10 +1001,10 @@ ws.onopen = function () {
 // event emmited when receiving message 
 ws.onmessage = function (ev) {
 	if (ev.data == "") { return; }
-	if (typeof JSON.parse(ev.data) == "object") {
+	try {
 		console.log(JSON.parse(ev.data));
 		_createFromJSON(JSON.parse(ev.data));
-	} else {
+	} catch (error) {
 		let status_field = document.getElementById("status-output");
 		status_field.textContent = status_field.textContent + "\n" + ev.data;
 		status_field.scrollTop = status_field.scrollHeight;

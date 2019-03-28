@@ -6,7 +6,7 @@ const ReadOut = require("./routing/readOut");
 
 const port = 3000;
 
-app.use(express.static(path.join(__dirname, "routing")));
+app.use(express.static(path.join(__dirname, "")));
 
 app.use(express.json());
 
@@ -41,7 +41,7 @@ app.post("/configure", async function(req, res) {
 app.post("/readout", async function(req, res) {
 	console.log(req.body);
 	try {
-		cardReader.readCard(req.body.ip).then((result) => {
+		cardReader.readCard(req.body.ip, statusCallback).then((result) => {
 			//console.log(JSON.stringify(result, null, 2));
 			wsConnection.send(JSON.stringify(result));
 		});

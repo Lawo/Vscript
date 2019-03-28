@@ -8,17 +8,25 @@ class CardReader {
 		this.debug = debug;
 	}
 
-	async readCard(ip) {
+	async readCard(ip, callback) {
+		callback("Starting readout...");
 		let card = {};
 		card.web_routing_config = { routes: [] };
 		await vscript.connect_to(ip);
 		card.ip = ip;
+		callback("Reading system objects.");
 		card.system_config = await this.readSystem();
+		callback("Reading network objects.");
 		card.network_config = await this.readNetwork();
+		callback("Reading PTP objects.");
 		card.ptp_config = await this.readPtp();
+		callback("Reading crossbar objects.");
 		card.crossbar_config = await this.readCrossbars(card.web_routing_config.routes);
+		callback("Reading SDI objects.");
 		card.sdi_config = await this.readIoModule(card.web_routing_config.routes);
+		callback("Reading RTP receiver objects.");
 		card.rtp_receiver_config = await this.readRtpReceivers(card.web_routing_config.routes);
+		callback("Finished readout! Drawing...");
 		await vscript.disconnect_from(ip);
 		return card;		
 	}
@@ -113,11 +121,11 @@ class CardReader {
 			crossbarConfig.crossbars.push(crossbar);
 			for (let inp = 0; inp < crossbar.num_in; inp++) {
 				let source = await vscript.read("a_v_crossbar.pool[" + i + "].inputs[" + inp + "].source", "video_status");
-				if (source !== null) { routes.push(this.getRouteObject("video", source, "large_crossbar", i, inp)); }
+				if (source !== null) { routes.push(this.getRouteObject("video", source, "a_v_crossbar", i, inp)); }
 			}
 			for (let inp = 0; inp < crossbar.num_in; inp++) {
 				let source = await vscript.read("a_v_crossbar.pool[" + i + "].inputs[" + inp + "].source", "audio_status");
-				if (source !== null) { routes.push(this.getRouteObject("audio", source, "large_crossbar", i, inp)); }
+				if (source !== null) { routes.push(this.getRouteObject("audio", source, "a_v_crossbar", i, inp)); }
 			}
 		}
 
@@ -233,7 +241,6 @@ class CardReader {
 	}
 
 	getIndexes(kwl) {
-		console.log(kwl);
 		if (kwl == null) { return [0,0]; }
 		let idxs = [];
 		let reducedKwl = kwl;

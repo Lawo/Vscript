@@ -24,7 +24,6 @@
     "influx": "^5.0.7",
     "ip": "^1.1.5",
     "jsplumb": "^2.9.0",
-    "panzoom": "^7.1.2",
     "ssh2": "^0.8.2",
     "vscript": "file:./vscript",
     "ws": "^6.1.4"

@@ -37,7 +37,7 @@ body {
 
 .routing-main {    
     position: relative;
-    margin-top:10px;
+    margin-top:0px;
 }
 
 .routing-main .description {
@@ -57,6 +57,7 @@ body {
     max-height: 85vh;
     background-color:white;
     display: flex;
+    overflow: unset !important;
 }
 
 .canvas-wide {
@@ -151,7 +152,7 @@ li {
     }
     .routing-canvas {
         margin-left: 0;
-        margin-top:10px;
+        margin-top:0;
         height:364px;
     }
 }
