@@ -228,7 +228,7 @@ let _updateEndpoints = function (blockId) {
 	};
 	let overlap = false;
 	let crossbarType;
-	if (blockType === "crossbar") {
+	if (blockType.includes("crossbar")) {
 		crossbarType = _readParameter(b, "xbar-type");
 		switch (crossbarType) {
 		case "a_v":
@@ -840,10 +840,10 @@ let blockProto = {
 
 		]
 	},
-	crossbar: {
-		class: "crossbar",
-		identifier: "crossbar",
-		description: "Crossbar",
+	a_v_crossbar: {
+		class: "av-crossbar",
+		identifier: "a_v_crossbar",
+		description: "AV Crossbar",
 		config_array: "crossbars",
 		instances: [],
 		max_instances: 20,
@@ -852,7 +852,38 @@ let blockProto = {
 		parameters: [
 			{id: "num-in", name: "Inputs", type: "number", value: 0, oninput: true, range: [0,200]},
 			{id: "num-out", name: "Outputs", type: "number", value: 0, oninput: true, range: [0,200]},
-			{id: "xbar-type", name: "Crossbar type", type: "select", value: ["a_v", "video", "large"], text: ["AV", "Video", "Audio"], oninput: true},
+			{id: "xbar-type", name: "Crossbar type", type: "select", value: ["a_v"], text: ["AV"], disabled: true},
+			{id: "channels", name: "Audio channels", type: "number", value: 16},
+		]
+	},
+	video_crossbar: {
+		class: "video-crossbar",
+		identifier: "video_crossbar",
+		description: "Video Crossbar",
+		config_array: "crossbars",
+		instances: [],
+		max_instances: 20,
+		deletable: true,
+		required: false,
+		parameters: [
+			{id: "num-in", name: "Inputs", type: "number", value: 0, oninput: true, range: [0,200]},
+			{id: "num-out", name: "Outputs", type: "number", value: 0, oninput: true, range: [0,200]},
+			{id: "xbar-type", name: "Crossbar type", type: "select", value: ["video"], text: ["Video"], disabled: true},
+		]
+	},
+	audio_crossbar: {
+		class: "audio-crossbar",
+		identifier: "audio_crossbar",
+		description: "Audio Crossbar",
+		config_array: "crossbars",
+		instances: [],
+		max_instances: 20,
+		deletable: true,
+		required: false,
+		parameters: [
+			{id: "num-in", name: "Inputs", type: "number", value: 0, oninput: true, range: [0,200]},
+			{id: "num-out", name: "Outputs", type: "number", value: 0, oninput: true, range: [0,200]},
+			{id: "xbar-type", name: "Crossbar type", type: "select", value: ["large"], text: ["Audio"], disabled: true},
 			{id: "channels", name: "Audio channels", type: "number", value: 16},
 		]
 	},

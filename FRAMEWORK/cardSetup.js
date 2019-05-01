@@ -331,27 +331,27 @@ module.exports = function () {
 		config.addresses.push(config.front_mgmt, config.rear_mgmt);
 		if (config.hasOwnProperty("gateways")) { config.gateways.push(config.front_mgmt_gateway, config.rear_mgmt_gateway); }
 		for (let i = 0; i < config.addresses.length; i++) {
-			let current_ip = await vscript.read("network_interfaces.ports[" + i + "].current_configuration.base.ip_addresses[0]", "ip_address");
-			let current_prefix = await vscript.read("network_interfaces.ports[" + i + "].current_configuration.base.ip_addresses[0]", "prefix");
+			let current_ip = await vscript.read("network_interfaces.ports[" + i + "].current_configuration.base.ip_addresses[0]", "ip_address", { ip: this.ip} );
+			let current_prefix = await vscript.read("network_interfaces.ports[" + i + "].current_configuration.base.ip_addresses[0]", "prefix", { ip: this.ip} );
 			if (current_ip != config.addresses[i].split("/")[0]) {
-				await vscript.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i].split("/")[0]);
+				await vscript.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "ip_address", config.addresses[i].split("/")[0], { ip: this.ip} );
 				config.reboot = true;
-				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", { ip: this.ip} );
 			}
 			if (current_prefix != config.addresses[i].split("/")[1]) {
-				await vscript.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.addresses[i].split("/")[1]));
+				await vscript.write("network_interfaces.ports[" + i + "].desired_configuration.base.ip_addresses[0]", "prefix", parseInt(config.addresses[i].split("/")[1]), { ip: this.ip} );
 				config.reboot = true;
-				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", { ip: this.ip} );
 			}
 		}
 		for (let i = 0; i < config.gateways.length; i++) {
-			let current_gateway = await vscript.read("network_interfaces.ports[" + i + "].current_configuration.base.routes[0]", "via");
+			let current_gateway = await vscript.read("network_interfaces.ports[" + i + "].current_configuration.base.routes[0]", "via", { ip: this.ip} );
 			if (current_gateway != config.gateways[i]) {
-				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "].desired_configuration.base", "add_route", "Click");
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "].desired_configuration.base", "add_route", "Click", { ip: this.ip} );
 				await vscript.pause_ms(250);
-				await vscript.write("network_interfaces.ports[" + i + "].desired_configuration.base.routes[0]", "via", config.gateways[i]);
+				await vscript.write("network_interfaces.ports[" + i + "].desired_configuration.base.routes[0]", "via", config.gateways[i], { ip: this.ip} );
 				config.reboot = true;
-				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click");
+				await vscript.dispatch_change_request("network_interfaces.ports[" + i + "]", "save_config", "Click", { ip: this.ip} );
 			}
 		}
 
@@ -603,7 +603,7 @@ module.exports = function () {
 				await this.write("video_transmitter.pool[" + p + "].constraints", "max_bandwidth_command", config.transmitters[i].constr_bandwith, { ip: this.ip });
 			}
 			if (config.transmitters[i].hasOwnProperty("reserve_uhd") && config.transmitters[i].reserve_uhd === true) {
-				await this.write("video_transmitter.pool[" + p + "].constraints", "reserve_uhd_resources_command", true);
+				await this.write("video_transmitter.pool[" + p + "].constraints", "reserve_uhd_resources_command", true, { ip: this.ip });
 			}
 			//
 

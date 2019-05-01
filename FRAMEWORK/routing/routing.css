@@ -227,7 +227,7 @@ path {
     white-space: pre;
 }
 
-.routing .rtp-receiver, .sdi, .audio-delay, .audio-transmitter, .video-delay, .video-transmitter, .crossbar, .audio-src {
+.routing .rtp-receiver, .sdi, .audio-delay, .audio-transmitter, .video-delay, .video-transmitter, .av-crossbar, .video-crossbar, .audio-crossbar, .audio-src {
     border: 1px solid #346789;
     box-shadow: 2px 2px 19px #aaa;
     -o-box-shadow: 2px 2px 19px #aaa;
