@@ -529,9 +529,9 @@ let _calculateRoutes = function() {
 
 let _setRoutes = function(routes) {
 	for (let r of routes) {
-		console.log(JSON.stringify(r));
-		let sourceId = (r.source_type.includes("crossbar") ? "crossbar" : r.source_type) + "_" + r.source_idx;
-		let targetId = (r.target_type.includes("crossbar") ? "crossbar" : r.target_type) + "_" + r.target_idx;
+		//console.log(JSON.stringify(r));
+		let sourceId = r.source_type + "_" + r.source_idx;
+		let targetId = r.target_type + "_" + r.target_idx;
 		let sourceEndpoint = instance.selectEndpoints({ source: sourceId, scope: r.signal_type}).get(r.source_endpoint_idx);
 		let targetEndpoint = instance.selectEndpoints({ target: targetId, scope: r.signal_type}).get(r.target_endpoint_idx);
 		if (typeof sourceEndpoint == "undefined" || typeof targetEndpoint == "undefined") { continue; }
@@ -693,6 +693,20 @@ let _createFromJSON = function(obj) {
 				}
 				_updateEndpoints(el.id);
 			}
+			else if (config_obj == "crossbar_config") {
+				for (let crossbarType in obj[config_obj]) {
+					crossbarType = crossbarType.slice(0,-1);
+					let config_array_name = blockProto[crossbarType].config_array;
+					let config_array = obj[config_obj][config_array_name];
+					for (let item of config_array) {
+						let el = _createBlock(crossbarType);
+						for (let param in item) {
+							_setParameter(el, param, item[param]);
+						}
+						_updateEndpoints(el.id);
+					}
+				}
+			}
 			else if (["network_config", "ip", "sdi_config", "web_routing_config"].includes(config_obj)){
 				// Do nothing
 			}
@@ -844,7 +858,7 @@ let blockProto = {
 		class: "av-crossbar",
 		identifier: "a_v_crossbar",
 		description: "AV Crossbar",
-		config_array: "crossbars",
+		config_array: "a_v_crossbars",
 		instances: [],
 		max_instances: 20,
 		deletable: true,
@@ -860,7 +874,7 @@ let blockProto = {
 		class: "video-crossbar",
 		identifier: "video_crossbar",
 		description: "Video Crossbar",
-		config_array: "crossbars",
+		config_array: "video_crossbars",
 		instances: [],
 		max_instances: 20,
 		deletable: true,
@@ -875,7 +889,7 @@ let blockProto = {
 		class: "audio-crossbar",
 		identifier: "audio_crossbar",
 		description: "Audio Crossbar",
-		config_array: "crossbars",
+		config_array: "audio_crossbars",
 		instances: [],
 		max_instances: 20,
 		deletable: true,
@@ -1021,24 +1035,50 @@ let blockProto = {
 	},
 };
 
+let statusMessage = function(statusText) {
+	console.log(statusText);
+	let status_field = document.getElementById("status-output");
+	status_field.textContent = status_field.textContent + "\n" + statusText;
+	status_field.scrollTop = status_field.scrollHeight;
+}
 
-var ws = new WebSocket("ws://localhost:40510");
-// event emmited when connected
-ws.onopen = function () {
-	console.log("websocket is connected ...");
-	// sending a send event to websocket server
-	ws.send("connected");
-};
-// event emmited when receiving message 
-ws.onmessage = function (ev) {
-	if (ev.data == "") { return; }
-	try {
-		console.log(JSON.parse(ev.data));
-		_createFromJSON(JSON.parse(ev.data));
-	} catch (error) {
-		let status_field = document.getElementById("status-output");
-		status_field.textContent = status_field.textContent + "\n" + ev.data;
-		status_field.scrollTop = status_field.scrollHeight;
-	}
-	
-};
+let connect = function() {
+	var ws = new WebSocket('ws://localhost:40510');
+	let configButton = document.getElementById("configure-blade");
+	let readoutButton = document.getElementById("readout-blade");
+	ws.onopen = function() {
+		statusMessage("websocket is connected ...");
+		configButton.disabled = false;
+		readoutButton.disabled = false;
+		// sending a send event to websocket server
+		ws.send("connected");
+	};
+
+	ws.onmessage = function(ev) {
+		if (ev.data == "") { return; }
+		try {
+			console.log(JSON.parse(ev.data));
+			_createFromJSON(JSON.parse(ev.data));
+		} catch (error) {
+			statusMessage(ev.data);
+		}
+	};
+
+	ws.onclose = function(e) {
+		statusMessage('Socket is closed. Reconnect will be attempted in 3 seconds.', e.reason);
+		configButton.disabled = true;
+		readoutButton.disabled = true;
+		setTimeout(function() {
+		connect();
+		}, 3000);
+	};
+
+	ws.onerror = function(err) {
+		statusMessage('Socket encountered error: ', err.message, 'Closing socket');
+		configButton.disabled = true;
+		readoutButton.disabled = true;
+		ws.close();
+	};
+}
+
+connect();
