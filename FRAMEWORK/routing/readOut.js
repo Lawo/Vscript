@@ -19,19 +19,13 @@ class CardReader {
 
 			card.web_routing_config = { routes: [] };
 			card.ip = ip;
-			callback("Parsing system objects.");
 			card.system_config = this.parseSystem();
-			callback("Parsing network objects.");
 			card.network_config = this.parseNetwork();
-			callback("Parsing PTP objects.");
 			card.ptp_config = this.parsePtp();
-			callback("Parsing crossbar objects.");
 			card.crossbar_config = this.parseCrossbars(card.web_routing_config.routes);
-			callback("Parsing SDI objects.");
 			card.sdi_config = this.parseIoModule(card.web_routing_config.routes);
-			callback("Parsing RTP receiver objects.");
 			card.rtp_receiver_config = this.parseRtpReceivers(card.web_routing_config.routes);
-			callback("Finished readout! Drawing...");
+			callback("Finished readout!");
 			console.log(JSON.stringify(card, null, 3));
 		});
 		return card;	
@@ -224,7 +218,7 @@ class CardReader {
 		return sdiConfig;
 	}
 
-	parseRtpReceivers(routes) {
+	parseRtpReceivers() {
 		let rtpReceiverConfig = { receivers: [] };
 		let sessionIdxs = this.allocatedIndices("r_t_p_receiver.sessions");
 		if (sessionIdxs.length == 0) { return rtpReceiverConfig; }
